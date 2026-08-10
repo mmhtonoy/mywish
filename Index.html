@@ -1,0 +1,1346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MWISH - Social Network</title>
+  <style>
+    :root {
+      --primary: #1877f2;
+      --secondary: #0056b3;
+      --bg: #0f172a;
+      --card-bg: #1e293b;
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --border: #334155;
+      --online: #22c55e;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    body { background-color: var(--bg); color: var(--text); padding-bottom: 30px; }
+    
+    header { background: var(--card-bg); padding: 10px 16px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 100; gap: 10px; }
+    .logo-container { display: flex; align-items: center; gap: 8px; cursor: pointer; flex-shrink: 0; }
+    .logo-text { font-size: 20px; font-weight: bold; color: var(--primary); }
+    
+    /* Header Search Bar Area */
+    .header-search { flex: 1; max-width: 300px; position: relative; }
+    .header-search input { width: 100%; padding: 8px 12px 8px 32px; background: #0f172a; border: 1px solid var(--border); color: white; border-radius: 20px; font-size: 13px; outline: none; }
+    .header-search svg { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); width: 14px; height: 14px; fill: var(--text-muted); }
+    .search-results-dropdown { position: absolute; top: 100%; left: 0; right: 0; background: var(--card-bg); border: 1px solid var(--border); border-radius: 8px; margin-top: 5px; max-height: 280px; overflow-y: auto; z-index: 200; display: none; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
+    .search-result-item { padding: 10px 12px; display: flex; align-items: center; gap: 10px; cursor: pointer; border-bottom: 1px solid var(--border); font-size: 13px; }
+    .search-result-item:last-child { border-bottom: none; }
+    .search-result-item:hover { background: #334155; }
+    .search-avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--primary); display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 13px; overflow: hidden; flex-shrink: 0; position: relative; }
+    .search-avatar img { width: 100%; height: 100%; object-fit: cover; }
+
+    /* Active Status Dot */
+    .active-dot { position: absolute; bottom: 1px; right: 1px; width: 10px; height: 10px; background-color: var(--online); border-radius: 50%; border: 2px solid var(--card-bg); }
+
+    .container { max-width: 600px; margin: 15px auto; padding: 0 12px; }
+    .card { background: var(--card-bg); padding: 18px; border-radius: 12px; border: 1px solid var(--border); margin-bottom: 15px; position: relative; }
+    .section-title { font-size: 16px; font-weight: bold; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); padding-bottom: 8px; }
+    input, textarea, select { width: 100%; padding: 10px; margin: 6px 0 12px 0; background: #0f172a; border: 1px solid var(--border); color: white; border-radius: 8px; outline: none; font-size: 14px; }
+    button { width: 100%; padding: 10px; background: var(--primary); border: none; color: white; font-weight: bold; border-radius: 8px; cursor: pointer; margin-top: 6px; transition: 0.2s; }
+    button:active { opacity: 0.8; }
+    .btn-secondary { background: #334155; }
+    .btn-danger { background: #ef4444; }
+    .btn-danger:hover { background: #dc2626; }
+    .btn-sm { width: auto; padding: 6px 12px; font-size: 12px; margin: 0; }
+    
+    .tabs { display: flex; justify-content: space-around; background: var(--card-bg); padding: 8px 0; border-radius: 12px; border: 1px solid var(--border); margin-bottom: 15px; }
+    .tab-btn { flex: 1; display: flex; justify-content: center; align-items: center; padding: 10px; color: var(--text-muted); cursor: pointer; border-radius: 8px; transition: 0.2s; }
+    .tab-btn svg { width: 24px; height: 24px; fill: currentColor; }
+    .tab-btn.active { color: var(--primary); background: rgba(24, 119, 242, 0.1); border-bottom: 3px solid var(--primary); }
+
+    /* Stories Bar */
+    .stories-container { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 8px; margin-bottom: 15px; }
+    .story-card { min-width: 105px; height: 160px; border-radius: 12px; background: #0f172a; border: 1px solid var(--border); position: relative; overflow: hidden; cursor: pointer; flex-shrink: 0; display: flex; flex-direction: column; justify-content: flex-end; padding: 8px; }
+    .story-card img.story-bg { position: absolute; top:0; left:0; width:100%; height:100%; object-fit: cover; opacity: 0.85; }
+    .story-add-btn { background: var(--card-bg); border: 2px stroke var(--primary); display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; font-size: 11px; font-weight: 600; }
+    .story-add-icon { width: 36px; height: 36px; border-radius: 50%; background: var(--primary); display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: bold; margin-bottom: 6px; box-shadow: 0 2px 8px rgba(24,119,242,0.4); }
+    .story-user-name { position: relative; z-index: 2; font-size: 11px; font-weight: bold; text-shadow: 0 1px 3px rgba(0,0,0,0.9); }
+    .story-privacy-badge { position: absolute; top: 6px; right: 6px; background: rgba(0,0,0,0.6); padding: 2px 6px; border-radius: 10px; font-size: 9px; }
+
+    /* Fullscreen Story Viewer Modal */
+    .fullscreen-modal { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: #000; z-index: 2000; display: flex; flex-direction: column; justify-content: space-between; padding: 20px 10px; }
+    .fullscreen-modal-header { display: flex; justify-content: space-between; align-items: center; color: white; z-index: 2001; background: rgba(0,0,0,0.4); padding: 8px; border-radius: 8px; }
+    .fullscreen-story-img { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: contain; }
+
+    /* Menu Dropdown Component */
+    .dropdown-menu-wrap { position: relative; display: inline-block; }
+    .dropdown-btn { background: transparent; border: none; color: var(--text-muted); font-size: 18px; cursor: pointer; padding: 4px 8px; border-radius: 50%; width: auto; margin: 0; }
+    .dropdown-menu { position: absolute; right: 0; top: 28px; background: #1e293b; border: 1px solid var(--border); border-radius: 8px; width: 180px; box-shadow: 0 4px 12px rgba(0,0,0,0.5); z-index: 100; display: none; overflow: hidden; }
+    .dropdown-menu.show { display: block; }
+    .dropdown-item { padding: 10px 12px; font-size: 12px; display: flex; align-items: center; gap: 8px; color: var(--text); cursor: pointer; }
+    .dropdown-item:hover { background: #334155; }
+
+    /* Post Layout */
+    .post-meta-selectors { display: flex; gap: 8px; margin: 8px 0; }
+    .post-meta-selectors select { margin: 0; font-size: 12px; padding: 6px; }
+    .photo-upload-btn { display: flex; align-items: center; gap: 6px; background: #0f172a; border: 1px solid var(--border); padding: 8px 12px; border-radius: 20px; cursor: pointer; font-size: 12px; color: #4ade80; font-weight: 600; }
+    .photo-upload-btn svg { width: 18px; height: 18px; fill: #4ade80; }
+    .image-preview { width: 100%; max-height: 220px; object-fit: cover; border-radius: 8px; margin-top: 10px; display: none; }
+
+    .reactions-wrapper { position: relative; display: inline-block; flex: 1; }
+    .reactions-box { position: absolute; bottom: 35px; left: 0; background: #1e293b; border: 1px solid var(--border); border-radius: 30px; padding: 6px 10px; display: none; gap: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); z-index: 50; }
+    .reactions-wrapper:hover .reactions-box, .reactions-box.show { display: flex; }
+    .react-icon { font-size: 20px; cursor: pointer; transition: transform 0.15s ease; }
+    .react-icon:hover { transform: scale(1.3); }
+
+    .post-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+    .post-user-info { display: flex; align-items: center; gap: 10px; cursor: pointer; }
+    .avatar { width: 38px; height: 38px; border-radius: 50%; background: var(--primary); display: flex; align-items: center; justify-content: center; font-weight: bold; overflow: hidden; flex-shrink: 0; position: relative; }
+    .avatar img { width: 100%; height: 100%; object-fit: cover; }
+    .post-image { width: 100%; max-height: 400px; object-fit: cover; border-radius: 8px; margin-top: 10px; }
+    .post-actions { display: flex; justify-content: space-between; margin-top: 12px; border-top: 1px solid var(--border); padding-top: 8px; gap: 2px; }
+    .action-btn { background: transparent; border: none; color: var(--text-muted); cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 4px; font-size: 12px; padding: 6px; border-radius: 6px; flex: 1; }
+    .action-btn:hover { background: rgba(255,255,255,0.05); }
+
+    /* Messaging UI & Requests */
+    .chat-sub-tabs { display: flex; gap: 10px; margin-bottom: 12px; border-bottom: 1px solid var(--border); padding-bottom: 8px; }
+    .chat-tab-btn { font-size: 13px; font-weight: 600; color: var(--text-muted); cursor: pointer; padding: 4px 8px; border-radius: 6px; }
+    .chat-tab-btn.active { color: white; background: var(--primary); }
+
+    .chat-container { display: flex; flex-direction: column; height: 380px; }
+    .chat-messages { flex: 1; overflow-y: auto; padding: 10px; background: #0f172a; border-radius: 8px; border: 1px solid var(--border); display: flex; flex-direction: column; gap: 8px; }
+    .msg-bubble { max-width: 75%; padding: 8px 12px; border-radius: 14px; font-size: 13px; word-break: break-word; }
+    .msg-bubble.sent { align-self: flex-end; background: var(--primary); color: white; border-bottom-right-radius: 2px; }
+    .msg-bubble.received { align-self: flex-start; background: #334155; color: white; border-bottom-left-radius: 2px; }
+
+    .user-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border); }
+    .user-item:last-child { border: none; }
+    
+    /* Lock Profile Badge */
+    .profile-locked-box { background: rgba(239,68,68,0.1); border: 1px solid #ef4444; border-radius: 8px; padding: 10px; text-align: center; margin-top: 10px; font-size: 13px; color: #f87171; }
+
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+
+  <!-- App Header -->
+  <header>
+    <div class="logo-container" id="logoBtn">
+      <svg width="28" height="28" viewBox="0 0 100 100" fill="none">
+        <rect width="100" height="100" rx="22" fill="#1877F2" />
+        <path d="M25 68V32L40 50L50 38L60 50L75 32V68" stroke="white" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <span class="logo-text">MWISH</span>
+    </div>
+
+    <!-- Web Search Option -->
+    <div class="header-search hidden" id="headerSearchArea">
+      <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+      <input type="text" id="globalSearchInput" placeholder="Search public users..." oninput="searchPublicUsers(this.value)">
+      <div id="searchResultsDropdown" class="search-results-dropdown"></div>
+    </div>
+  </header>
+
+  <div class="container">
+    
+    <!-- Auth Screen -->
+    <div id="authScreen" class="card">
+      <h2 id="authTitle" style="margin-bottom: 15px;">Login</h2>
+      <input type="text" id="authName" placeholder="Full Name" class="hidden">
+      <input type="text" id="authUsername" placeholder="Username" class="hidden">
+      <input type="email" id="authEmail" placeholder="Email Address">
+      <input type="password" id="authPassword" placeholder="Password">
+      <button id="authSubmitBtn">Login</button>
+      <p style="text-align: center; margin-top: 15px; font-size: 14px; color: var(--text-muted);">
+        <span id="toggleAuthText">Don't have an account?</span> 
+        <a href="#" id="toggleAuthLink" style="color: var(--primary);">Register Now</a>
+      </p>
+    </div>
+
+    <!-- Main Application UI -->
+    <div id="appScreen" class="hidden">
+      
+      <!-- Icon Navigation Bar -->
+      <div class="tabs">
+        <div class="tab-btn active" id="feedTab" title="Feed">
+          <svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+        </div>
+        <div class="tab-btn" id="friendsTab" title="Friends">
+          <svg viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
+        </div>
+        <div class="tab-btn" id="messagesTab" title="Messages">
+          <svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 9h12v2H6V9zm8 5H6v-2h8v2zm4-6H6V6h12v2z"/></svg>
+        </div>
+        <div class="tab-btn" id="profileTab" title="Profile">
+          <svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+        </div>
+        <div class="tab-btn" id="settingsTab" title="Settings">
+          <svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6-3.6z"/></svg>
+        </div>
+      </div>
+
+      <!-- Feed View -->
+      <div id="feedView">
+        <!-- Stories Section -->
+        <div class="stories-container" id="storiesBar">
+          <label for="storyImageInput" class="story-card story-add-btn">
+            <div class="story-add-icon">+</div>
+            <span>Create Story</span>
+            <select id="storyPrivacySelect" style="margin-top: 4px; padding: 2px; font-size: 10px; width: 90%; background: #1e293b;" onclick="event.stopPropagation()">
+              <option value="Public">🌎 Public</option>
+              <option value="Friends">👥 Friends</option>
+              <option value="Custom">⚙️ Custom</option>
+              <option value="Hide">🚫 Hide From...</option>
+              <option value="Only Me">🔒 Only Me</option>
+            </select>
+            <input type="file" id="storyImageInput" accept="image/*" style="display: none;">
+          </label>
+
+          <div id="activeStoriesList" style="display: flex; gap: 10px;"></div>
+        </div>
+
+        <!-- Create Post Card -->
+        <div class="card">
+          <textarea id="postText" rows="3" placeholder="What's on your mind?..."></textarea>
+          
+          <div class="post-meta-selectors">
+            <select id="postFeeling">
+              <option value="">😊 Feeling / Activity...</option>
+              <option value="Feeling Happy 😊">Feeling Happy 😊</option>
+              <option value="Feeling Blessed 😇">Feeling Blessed 😇</option>
+              <option value="Feeling Excited 🤩">Feeling Excited 🤩</option>
+              <option value="Celebrating 🥳">Celebrating 🥳</option>
+              <option value="Watching Movies 🍿">Watching Movies 🍿</option>
+              <option value="Listening to Music 🎧">Listening to Music 🎧</option>
+            </select>
+
+            <select id="postPrivacy">
+              <option value="Public">🌎 Public</option>
+              <option value="Friends">👥 Friends</option>
+              <option value="Only Me">🔒 Only Me</option>
+            </select>
+          </div>
+
+          <img id="postImagePreview" class="image-preview" alt="Preview">
+
+          <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border); padding-top: 8px;">
+            <label for="postImageInput" class="photo-upload-btn">
+              <svg viewBox="0 0 24 24"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg>
+              <span>Photo</span>
+            </label>
+            <input type="file" id="postImageInput" accept="image/*" style="display: none;">
+            <button id="createPostBtn" style="width: auto; margin: 0; padding: 8px 24px;">Post</button>
+          </div>
+        </div>
+
+        <!-- Feed Posts List -->
+        <div id="postsList"></div>
+      </div>
+
+      <!-- Messages View -->
+      <div id="messagesView" class="hidden">
+        <div class="card">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+            <h3>Messages</h3>
+            <button class="btn-secondary btn-sm" id="openCreateGroupBtn">+ Create Group</button>
+          </div>
+
+          <!-- Chat Tabs: Primary & Message Requests -->
+          <div class="chat-sub-tabs">
+            <span class="chat-tab-btn active" id="primaryChatsTab" onclick="switchChatSubTab('primary')">Chats</span>
+            <span class="chat-tab-btn" id="requestChatsTab" onclick="switchChatSubTab('requests')">Message Requests (<span id="msgRequestCount">0</span>)</span>
+          </div>
+
+          <!-- Message Search Bar with Small Search Button -->
+          <div id="chatSearchBoxArea" style="display: flex; gap: 6px; margin-bottom: 10px;">
+            <input type="text" id="chatSearchInput" placeholder="Search conversations..." style="margin:0;">
+            <button id="execChatSearchBtn" class="btn-secondary btn-sm" style="padding: 0 12px; font-size:14px;">🔍</button>
+          </div>
+
+          <div id="chatUserList"></div>
+        </div>
+
+        <!-- Group Creation Form -->
+        <div id="createGroupCard" class="card hidden">
+          <h4>Create New Group Chat</h4>
+          <input type="text" id="groupNameInput" placeholder="Group Name">
+          <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 6px;">Select Group Members:</p>
+          <div id="groupMembersCheckboxList" style="max-height: 120px; overflow-y: auto; margin-bottom: 10px;"></div>
+          <div style="display: flex; gap: 8px;">
+            <button id="submitCreateGroupBtn">Create Group</button>
+            <button class="btn-secondary" id="cancelGroupBtn">Cancel</button>
+          </div>
+        </div>
+
+        <!-- Active Chat Window -->
+        <div id="chatBoxCard" class="card hidden">
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
+            <div style="display:flex; align-items:center; gap:8px;">
+              <strong id="chatTargetName">User / Group</strong>
+              <span id="chatTargetStatus" style="font-size:11px; color:var(--online);"></span>
+            </div>
+            <button class="btn-secondary btn-sm" id="closeChatBtn">✕ Close</button>
+          </div>
+          <div class="chat-container">
+            <div class="chat-messages" id="chatMessages"></div>
+            <div style="display: flex; gap: 8px; margin-top: 10px;">
+              <input type="text" id="chatInputText" placeholder="Write a message..." style="margin: 0;">
+              <button id="sendMsgBtn" style="width: auto; margin: 0; padding: 0 16px;">Send</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Profile View -->
+      <div id="profileView" class="hidden">
+        <div class="card" style="text-align: center;">
+          
+          <!-- FB-Style Profile Options Menu Header -->
+          <div style="position: absolute; right: 12px; top: 12px;">
+            <div class="dropdown-menu-wrap">
+              <button class="dropdown-btn" onclick="toggleProfileMenu(event)">⋮</button>
+              <div class="dropdown-menu" id="profileActionMenu">
+                <div class="dropdown-item" onclick="toggleLockProfile()">🔒 <span id="lockProfileMenuText">Lock Profile</span></div>
+                <div class="dropdown-item" onclick="copyProfileLink()">🔗 Copy Profile Link</div>
+                <div class="dropdown-item" onclick="showProfileStoryArchive()">📦 Story Archive</div>
+                <div class="dropdown-item" onclick="showActivityLog()">📋 Activity Log</div>
+                <div class="dropdown-item" onclick="showPostArchive()">📁 Post Archive</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="profile-avatar-wrapper" style="position: relative; width: 90px; height: 90px; margin: 0 auto 10px;">
+            <div class="avatar" id="pAvatar" style="width: 100%; height: 100%; font-size: 32px;">U</div>
+            <label for="profileAvatarInput" style="position: absolute; bottom: 0; right: 0; background: var(--primary); border-radius: 50%; padding: 6px; cursor: pointer;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="white"><path d="M12 15c1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3 1.34 3 3 3zm9-9h-3.17l-1.86-2H8.03L6.17 6H3c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-9 13c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5z"/></svg>
+            </label>
+            <input type="file" id="profileAvatarInput" accept="image/*" style="display: none;">
+          </div>
+
+          <h2 id="pName">User Name</h2>
+          <p id="pUsername" style="color: var(--primary); font-size: 14px;">@username</p>
+          <p id="pBio" style="margin-top: 6px; font-size: 14px; color: var(--text-muted);">No bio available</p>
+
+          <!-- Locked Profile Indicator -->
+          <div id="lockedProfileBanner" class="profile-locked-box hidden">
+            🔒 This Profile is Locked. Only friends can view full profile details and posts.
+          </div>
+
+          <div id="profileDetailsArea" style="text-align: left; margin-top: 15px; border-top: 1px solid var(--border); padding-top: 12px; font-size: 13px;">
+            <div style="margin: 6px 0;">📧 Email: <span id="pEmail">Hidden</span></div>
+            <div style="margin: 6px 0;">🎂 Date of Birth: <span id="pDob">Not set</span></div>
+            <div style="margin: 6px 0;">💼 Work: <span id="pWork">Not set</span></div>
+            <div style="margin: 6px 0;">📞 Phone: <span id="pPhone">Not set</span></div>
+            <div style="margin: 6px 0;">📍 Location: <span id="pLocation">Not set</span></div>
+            <div style="margin: 6px 0;">🔒 Profile Privacy: <span id="pPrivacy">Public</span></div>
+          </div>
+        </div>
+
+        <!-- Story Archive Modal/Section -->
+        <div class="card hidden" id="storyArchiveSection">
+          <div class="section-title">
+            <span>📦 Story Archive</span>
+            <button class="btn-secondary btn-sm" onclick="document.getElementById('storyArchiveSection').classList.add('hidden')">✕ Close</button>
+          </div>
+          <div id="archivedStoriesList" style="display: flex; gap: 10px; overflow-x: auto;"></div>
+        </div>
+
+        <!-- Activity Log Modal/Section -->
+        <div class="card hidden" id="activityLogSection">
+          <div class="section-title">
+            <span>📋 Activity Log</span>
+            <button class="btn-secondary btn-sm" onclick="document.getElementById('activityLogSection').classList.add('hidden')">✕ Close</button>
+          </div>
+          <div id="activityLogList" style="font-size:13px; color:var(--text-muted);">Loading activity...</div>
+        </div>
+
+        <!-- Post Archive Modal/Section -->
+        <div class="card hidden" id="postArchiveSection">
+          <div class="section-title">
+            <span>📁 Archived Posts / Trash</span>
+            <button class="btn-secondary btn-sm" onclick="document.getElementById('postArchiveSection').classList.add('hidden')">✕ Close</button>
+          </div>
+          <div id="archivedPostsList"></div>
+        </div>
+
+        <h3>Posts</h3>
+        <div id="userPostsList"></div>
+      </div>
+
+      <!-- Friends View -->
+      <div id="friendsView" class="hidden">
+        <div class="card">
+          <h3>Friend Requests</h3>
+          <div id="requestsList"><p style="color: var(--text-muted); margin-top: 10px;">No pending requests</p></div>
+        </div>
+        <div class="card">
+          <h3>All Users</h3>
+          <div id="usersList"></div>
+        </div>
+      </div>
+
+      <!-- Settings & Privacy Screen -->
+      <div id="settingsView" class="hidden">
+        <div class="card">
+          <div class="section-title">👤 Personal Information</div>
+          <label style="font-size: 12px; color: var(--text-muted);">Full Name</label>
+          <input type="text" id="setN">
+          
+          <label style="font-size: 12px; color: var(--text-muted);">Bio</label>
+          <textarea id="setBio" rows="2"></textarea>
+
+          <label style="font-size: 12px; color: var(--text-muted);">Date of Birth</label>
+          <input type="date" id="setDob">
+
+          <label style="font-size: 12px; color: var(--text-muted);">Work / Occupation</label>
+          <input type="text" id="setWork">
+
+          <label style="font-size: 12px; color: var(--text-muted);">Location</label>
+          <input type="text" id="setLoc">
+        </div>
+
+        <div class="card">
+          <div class="section-title">🟢 Active Status Settings</div>
+          <label style="font-size: 12px; color: var(--text-muted);">Show Active Status (Green Dot)</label>
+          <select id="setActiveStatusSetting">
+            <option value="true">On (Show Active Status)</option>
+            <option value="false">Off (Hide Active Status)</option>
+          </select>
+        </div>
+
+        <div class="card">
+          <div class="section-title">🔒 Contact & Email Privacy</div>
+          <label style="font-size: 12px; color: var(--text-muted);">Email Address</label>
+          <input type="text" id="setEmailDisplay" disabled style="opacity: 0.6;">
+
+          <label style="font-size: 12px; color: var(--text-muted);">Email Privacy Option</label>
+          <select id="setEmailPrivacy">
+            <option value="Public">Public (Everyone can see)</option>
+            <option value="Friends">Friends Only</option>
+            <option value="Only Me">Only Me (Hidden)</option>
+          </select>
+
+          <label style="font-size: 12px; color: var(--text-muted);">Phone Number</label>
+          <input type="text" id="setPhone">
+        </div>
+
+        <div class="card">
+          <div class="section-title">⚙️ Account Visibility</div>
+          <label style="font-size: 12px; color: var(--text-muted);">Profile Visibility Privacy</label>
+          <select id="setPrivacy">
+            <option value="Public">Public</option>
+            <option value="Friends Only">Friends Only</option>
+            <option value="Private">Private (Only Me)</option>
+          </select>
+        </div>
+
+        <button id="saveSettingsBtn" style="margin-bottom: 15px;">Save Settings</button>
+
+        <div class="card" style="border-color: #ef4444;">
+          <div class="section-title" style="color: #ef4444;">🚪 Account Logout</div>
+          <button id="logoutBtn" class="btn-danger">Logout Account</button>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- Full Screen Story Viewer Modal -->
+  <div id="storyModal" class="fullscreen-modal hidden">
+    <div class="fullscreen-modal-header">
+      <div>
+        <strong id="storyAuthor">Story</strong>
+        <span id="storyTime" style="font-size: 11px; opacity: 0.8; margin-left: 8px;"></span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <div class="dropdown-menu-wrap" id="storyMenuContainer">
+          <button class="dropdown-btn" style="color: white;" onclick="toggleStoryMenu(event)">⋮</button>
+          <div class="dropdown-menu" id="storyActionMenu">
+            <div class="dropdown-item" onclick="changeActiveStoryPrivacy('Public')">🌎 Make Public</div>
+            <div class="dropdown-item" onclick="changeActiveStoryPrivacy('Friends')">👥 Friends Only</div>
+            <div class="dropdown-item" onclick="changeActiveStoryPrivacy('Only Me')">🔒 Only Me</div>
+            <div class="dropdown-item" style="color: #ef4444;" onclick="deleteActiveStory()">🗑 Delete Story</div>
+          </div>
+        </div>
+        <span style="font-size: 28px; cursor: pointer;" id="closeStoryModal">&times;</span>
+      </div>
+    </div>
+    <img id="storyImg" class="fullscreen-story-img" src="">
+  </div>
+
+  <!-- Firebase Integration -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendEmailVerification, signOut, onAuthStateChanged, updateProfile } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+    import { getFirestore, doc, setDoc, getDoc, updateDoc, deleteDoc, arrayUnion, arrayRemove, collection, addDoc, query, where, orderBy, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyBOWa-IA_JIIN2dbldPyIeDgDIwvQa0jEU",
+      authDomain: "mwish-3a7ea.firebaseapp.com",
+      projectId: "mwish-3a7ea",
+      storageBucket: "mwish-3a7ea.firebasestorage.app",
+      messagingSenderId: "2364086568",
+      appId: "1:2364086568:web:d67f1c69a8e63be782181d"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    let currentUser = null;
+    let currentUserData = null;
+    let isSignUpMode = false;
+    let selectedPostImageData = "";
+    let activeChatUid = null;
+    let activeChatType = "single"; 
+    let chatUnsubscribe = null;
+    let currentStoryData = null;
+    let allUsersCache = [];
+    let currentChatSubTab = "primary"; // 'primary' or 'requests'
+    let viewedProfileUid = null;
+
+    // Global Click Event Handler for Auto Hide & Clear Input
+    document.addEventListener('click', (e) => {
+      // 1. Header Search Clear
+      const searchArea = document.getElementById('headerSearchArea');
+      if (searchArea && !searchArea.contains(e.target)) {
+        const dropdown = document.getElementById('searchResultsDropdown');
+        if (dropdown) dropdown.style.display = 'none';
+        const searchInput = document.getElementById('globalSearchInput');
+        if (searchInput) searchInput.value = '';
+      }
+
+      // 2. Chat Search Clear & Reset List
+      const chatSearchBox = document.getElementById('chatSearchBoxArea');
+      if (chatSearchBox && !chatSearchBox.contains(e.target)) {
+        const chatSearchInput = document.getElementById('chatSearchInput');
+        if (chatSearchInput && chatSearchInput.value !== '') {
+          chatSearchInput.value = '';
+          renderChatUserList(allUsersCache);
+        }
+      }
+
+      // 3. Hide all open action menus if clicking outside
+      const isDropdownBtn = e.target.closest('.dropdown-btn');
+      const isDropdownMenu = e.target.closest('.dropdown-menu');
+      if (!isDropdownBtn && !isDropdownMenu) {
+        document.querySelectorAll('.dropdown-menu').forEach(menu => {
+          menu.classList.remove('show');
+        });
+      }
+    });
+
+    // Auth Screen Handling
+    const authScreen = document.getElementById('authScreen');
+    const appScreen = document.getElementById('appScreen');
+    const toggleAuthLink = document.getElementById('toggleAuthLink');
+
+    toggleAuthLink.onclick = (e) => {
+      e.preventDefault();
+      isSignUpMode = !isSignUpMode;
+      document.getElementById('authTitle').innerText = isSignUpMode ? "Create Account" : "Login";
+      document.getElementById('authSubmitBtn').innerText = isSignUpMode ? "Register" : "Login";
+      document.getElementById('authName').classList.toggle('hidden', !isSignUpMode);
+      document.getElementById('authUsername').classList.toggle('hidden', !isSignUpMode);
+    };
+
+    document.getElementById('authSubmitBtn').onclick = async () => {
+      const email = document.getElementById('authEmail').value.trim();
+      const password = document.getElementById('authPassword').value;
+      const name = document.getElementById('authName').value.trim();
+      const username = document.getElementById('authUsername').value.trim().toLowerCase();
+
+      try {
+        if (isSignUpMode) {
+          const res = await createUserWithEmailAndPassword(auth, email, password);
+          await updateProfile(res.user, { displayName: name });
+          await setDoc(doc(db, "users", res.user.uid), {
+            uid: res.user.uid, name, username, email, dob: "",
+            bio: "", work: "", phone: "", location: "",
+            avatarUrl: "", privacy: "Public", emailPrivacy: "Public", activeStatus: true, isLocked: false,
+            friends: [], requestsReceived: []
+          });
+          await sendEmailVerification(res.user);
+          await signOut(auth);
+          alert("Verification email sent! Verify to login.");
+        } else {
+          await signInWithEmailAndPassword(auth, email, password);
+        }
+      } catch (err) { alert(err.message); }
+    };
+
+    document.getElementById('logoutBtn').onclick = async () => {
+      if (currentUser) {
+        await updateDoc(doc(db, "users", currentUser.uid), { isOnline: false });
+      }
+      signOut(auth);
+    };
+
+    onAuthStateChanged(auth, async (user) => {
+      if (user && user.emailVerified) {
+        currentUser = user;
+        authScreen.classList.add('hidden');
+        appScreen.classList.remove('hidden');
+        
+        document.getElementById('headerSearchArea').classList.remove('hidden');
+
+        // Set user online
+        await updateDoc(doc(db, "users", user.uid), { isOnline: true });
+
+        listenToAllUsers();
+        loadPosts();
+        loadStories();
+        loadUsersAndRequests();
+      } else {
+        currentUser = null;
+        authScreen.classList.remove('hidden');
+        appScreen.classList.add('hidden');
+
+        document.getElementById('headerSearchArea').classList.add('hidden');
+      }
+    });
+
+    // Real-Time Users Listener
+    function listenToAllUsers() {
+      onSnapshot(collection(db, "users"), (snapshot) => {
+        allUsersCache = [];
+        snapshot.forEach((uDoc) => {
+          const data = uDoc.data();
+          allUsersCache.push(data);
+          if (currentUser && data.uid === currentUser.uid) {
+            currentUserData = data;
+          }
+        });
+        if (document.getElementById('messagesTab').classList.contains('active')) {
+          renderChatUserList(allUsersCache);
+        }
+      });
+    }
+
+    // Nav Tabs
+    const tabs = ['feed', 'friends', 'messages', 'profile', 'settings'];
+    tabs.forEach(t => {
+      document.getElementById(`${t}Tab`).onclick = () => switchTab(t);
+    });
+
+    function switchTab(tab) {
+      tabs.forEach(t => {
+        document.getElementById(`${t}Tab`).classList.toggle('active', t === tab);
+        document.getElementById(`${t}View`).classList.toggle('hidden', t !== tab);
+      });
+      if (tab === 'profile') openProfile(currentUser.uid);
+      if (tab === 'messages') renderChatUserList(allUsersCache);
+      if (tab === 'settings') loadSettingsData();
+    }
+
+    // Public Search
+    window.searchPublicUsers = (val) => {
+      const queryText = val.toLowerCase().trim();
+      const dropdown = document.getElementById('searchResultsDropdown');
+      if (!queryText) { dropdown.style.display = 'none'; dropdown.innerHTML = ""; return; }
+
+      dropdown.innerHTML = "";
+      const matches = allUsersCache.filter(u => 
+        (u.name && u.name.toLowerCase().includes(queryText)) || 
+        (u.username && u.username.toLowerCase().includes(queryText))
+      );
+
+      if (matches.length === 0) {
+        const div = document.createElement('div');
+        div.className = 'search-result-item';
+        div.style.color = 'var(--text-muted)';
+        div.innerText = 'No users found';
+        dropdown.appendChild(div);
+      } else {
+        matches.forEach(u => {
+          const div = document.createElement('div');
+          div.className = 'search-result-item';
+          const isOnline = u.activeStatus !== false && u.isOnline;
+          const avatarHtml = u.avatarUrl 
+            ? `<div class="search-avatar"><img src="${u.avatarUrl}">${isOnline ? '<span class="active-dot"></span>' : ''}</div>`
+            : `<div class="search-avatar">${u.name ? u.name[0].toUpperCase() : 'U'}${isOnline ? '<span class="active-dot"></span>' : ''}</div>`;
+          
+          div.innerHTML = `
+            ${avatarHtml}
+            <div style="flex:1;">
+              <div style="font-weight:bold; color:white;">${u.name}</div>
+              <div style="font-size:11px; color:var(--text-muted);">@${u.username || 'user'}</div>
+            </div>
+            <span style="font-size:11px; color:var(--primary); font-weight:600;">View Profile</span>
+          `;
+          div.onclick = (e) => {
+            e.stopPropagation();
+            dropdown.style.display = 'none';
+            document.getElementById('globalSearchInput').value = '';
+            openProfile(u.uid);
+          };
+          dropdown.appendChild(div);
+        });
+      }
+      dropdown.style.display = 'block';
+    };
+
+    // Open User Profile
+    window.openProfile = async (uid) => {
+      viewedProfileUid = uid;
+      switchTab('profile');
+      const uDoc = await getDoc(doc(db, "users", uid));
+      if (!uDoc.exists()) return;
+      const u = uDoc.data();
+
+      document.getElementById('pName').innerText = u.name || "User";
+      document.getElementById('pUsername').innerText = `@${u.username || 'user'}`;
+      document.getElementById('pBio').innerText = u.bio || "No bio available";
+
+      const isMe = uid === currentUser.uid;
+      const isFriend = (u.friends || []).includes(currentUser.uid);
+      const isLocked = u.isLocked && !isMe && !isFriend;
+
+      document.getElementById('lockedProfileBanner').classList.toggle('hidden', !isLocked);
+      document.getElementById('profileDetailsArea').classList.toggle('hidden', isLocked);
+      document.getElementById('userPostsList').classList.toggle('hidden', isLocked);
+
+      if (isMe) {
+        document.getElementById('lockProfileMenuText').innerText = u.isLocked ? "Unlock Profile" : "Lock Profile";
+      }
+
+      if (!isLocked) {
+        document.getElementById('pDob').innerText = u.dob || "Not set";
+        document.getElementById('pWork').innerText = u.work || "Not set";
+        document.getElementById('pPhone').innerText = u.phone || "Not set";
+        document.getElementById('pLocation').innerText = u.location || "Not set";
+        document.getElementById('pPrivacy').innerText = u.privacy || "Public";
+
+        let showEmail = false;
+        if (isMe) showEmail = true;
+        else if (u.emailPrivacy === "Public") showEmail = true;
+        else if (u.emailPrivacy === "Friends" && isFriend) showEmail = true;
+
+        document.getElementById('pEmail').innerText = showEmail ? u.email : "Hidden / Private";
+        loadUserPosts(uid);
+      }
+
+      const avatarEl = document.getElementById('pAvatar');
+      avatarEl.innerHTML = u.avatarUrl ? `<img src="${u.avatarUrl}">` : (u.name ? u.name[0].toUpperCase() : 'U');
+    };
+
+    // Profile Dropdown Menu Handlers
+    window.toggleProfileMenu = (event) => {
+      if (event) event.stopPropagation();
+      document.getElementById('profileActionMenu').classList.toggle('show');
+    };
+
+    window.toggleLockProfile = async () => {
+      if (!currentUserData) return;
+      const newLockState = !currentUserData.isLocked;
+      await updateDoc(doc(db, "users", currentUser.uid), { isLocked: newLockState });
+      alert(newLockState ? "Profile Locked successfully!" : "Profile Unlocked!");
+      openProfile(currentUser.uid);
+    };
+
+    window.copyProfileLink = () => {
+      const url = `${window.location.origin}#profile-${viewedProfileUid || currentUser.uid}`;
+      navigator.clipboard.writeText(url);
+      alert("Profile URL copied to clipboard!");
+    };
+
+    window.showProfileStoryArchive = () => {
+      document.getElementById('storyArchiveSection').classList.remove('hidden');
+    };
+
+    window.showActivityLog = async () => {
+      const section = document.getElementById('activityLogSection');
+      const list = document.getElementById('activityLogList');
+      section.classList.remove('hidden');
+      list.innerHTML = "Fetching activity...";
+
+      const q = query(collection(db, "posts"), where("userId", "==", currentUser.uid));
+      const snap = await getDoc(q); // dummy fetch
+      list.innerHTML = `
+        <div style="padding:6px 0; border-bottom:1px solid var(--border);">✅ Created account on MWISH</div>
+        <div style="padding:6px 0; border-bottom:1px solid var(--border);">📝 Updated Profile settings</div>
+        <div style="padding:6px 0;">💬 Active in Messenger chats</div>
+      `;
+    };
+
+    window.showPostArchive = () => {
+      const section = document.getElementById('postArchiveSection');
+      const container = document.getElementById('archivedPostsList');
+      section.classList.remove('hidden');
+      container.innerHTML = "";
+
+      const q = query(collection(db, "posts"), where("userId", "==", currentUser.uid));
+      onSnapshot(q, (snapshot) => {
+        container.innerHTML = "";
+        snapshot.forEach((docSnap) => {
+          const post = docSnap.data();
+          if (post.isTrashed) {
+            const div = document.createElement('div');
+            div.className = 'user-item';
+            div.innerHTML = `<span>${post.text || 'Archived Photo'}</span><button class="btn-sm" onclick="restorePost('${docSnap.id}')">Restore</button>`;
+            container.appendChild(div);
+          }
+        });
+      });
+    };
+
+    window.restorePost = async (id) => {
+      await updateDoc(doc(db, "posts", id), { isTrashed: false });
+      alert("Post restored to profile!");
+    };
+
+    // Avatar Update
+    document.getElementById('profileAvatarInput').onchange = async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const base64 = await convertBase64(file);
+      await updateDoc(doc(db, "users", currentUser.uid), { avatarUrl: base64 });
+      openProfile(currentUser.uid);
+    };
+
+    // Stories System
+    document.getElementById('storyImageInput').onchange = async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const imgData = await convertBase64(file);
+      const privacy = document.getElementById('storyPrivacySelect').value;
+
+      await addDoc(collection(db, "stories"), {
+        userId: currentUser.uid,
+        userName: currentUser.displayName || "User",
+        imageUrl: imgData,
+        privacy: privacy,
+        createdAt: serverTimestamp()
+      });
+      alert("Story published!");
+    };
+
+    function loadStories() {
+      const q = query(collection(db, "stories"), orderBy("createdAt", "desc"));
+      onSnapshot(q, (snapshot) => {
+        const activeContainer = document.getElementById('activeStoriesList');
+        const archiveContainer = document.getElementById('archivedStoriesList');
+        activeContainer.innerHTML = "";
+        if (archiveContainer) archiveContainer.innerHTML = "";
+
+        const now = Date.now();
+        const TWENTY_FOUR_HOURS = 24 * 60 * 60 * 1000;
+
+        snapshot.forEach((docSnap) => {
+          const s = docSnap.data();
+          const storyId = docSnap.id;
+          const storyTime = s.createdAt?.toMillis ? s.createdAt.toMillis() : now;
+          const isExpired = (now - storyTime) > TWENTY_FOUR_HOURS;
+
+          const card = document.createElement('div');
+          card.className = 'story-card';
+          card.innerHTML = `
+            <img src="${s.imageUrl}" class="story-bg">
+            <span class="story-privacy-badge">${s.privacy || 'Public'}</span>
+            <span class="story-user-name">${s.userName}</span>
+          `;
+          card.onclick = () => showFullscreenStory(storyId, s);
+
+          if (!isExpired) {
+            activeContainer.appendChild(card);
+          } else if (s.userId === currentUser.uid && archiveContainer) {
+            archiveContainer.appendChild(card);
+          }
+        });
+      });
+    }
+
+    function showFullscreenStory(id, storyData) {
+      currentStoryData = { id, ...storyData };
+      document.getElementById('storyAuthor').innerText = storyData.userName;
+      document.getElementById('storyTime').innerText = storyData.createdAt?.toMillis ? new Date(storyData.createdAt.toMillis()).toLocaleTimeString() : 'Just now';
+      document.getElementById('storyImg').src = storyData.imageUrl;
+      
+      const isOwner = storyData.userId === currentUser.uid;
+      document.getElementById('storyMenuContainer').style.display = isOwner ? 'block' : 'none';
+      document.getElementById('storyModal').classList.remove('hidden');
+    }
+
+    window.toggleStoryMenu = (event) => {
+      if (event) event.stopPropagation();
+      document.getElementById('storyActionMenu').classList.toggle('show');
+    };
+
+    window.changeActiveStoryPrivacy = async (newPrivacy) => {
+      if (!currentStoryData) return;
+      await updateDoc(doc(db, "stories", currentStoryData.id), { privacy: newPrivacy });
+      alert(`Story privacy changed to ${newPrivacy}`);
+      document.getElementById('storyActionMenu').classList.remove('show');
+    };
+
+    window.deleteActiveStory = async () => {
+      if (!currentStoryData) return;
+      if (confirm("Delete this story?")) {
+        await deleteDoc(doc(db, "stories", currentStoryData.id));
+        document.getElementById('storyModal').classList.add('hidden');
+      }
+    };
+
+    document.getElementById('closeStoryModal').onclick = () => {
+      document.getElementById('storyModal').classList.add('hidden');
+    };
+
+    // Posts Operations
+    document.getElementById('postImageInput').onchange = async (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        selectedPostImageData = await convertBase64(file);
+        const preview = document.getElementById('postImagePreview');
+        preview.src = selectedPostImageData;
+        preview.style.display = 'block';
+      }
+    };
+
+    document.getElementById('createPostBtn').onclick = async () => {
+      const text = document.getElementById('postText').value.trim();
+      const feeling = document.getElementById('postFeeling').value;
+      const privacy = document.getElementById('postPrivacy').value;
+
+      if (!text && !selectedPostImageData) return alert("Write something or select a photo!");
+
+      await addDoc(collection(db, "posts"), {
+        userId: currentUser.uid,
+        userName: currentUser.displayName || "User",
+        text: text,
+        feeling: feeling,
+        privacy: privacy,
+        imageUrl: selectedPostImageData,
+        reactions: {},
+        comments: [],
+        isTrashed: false,
+        createdAt: serverTimestamp()
+      });
+
+      document.getElementById('postText').value = "";
+      document.getElementById('postFeeling').value = "";
+      document.getElementById('postImagePreview').style.display = "none";
+      selectedPostImageData = "";
+    };
+
+    function loadPosts() {
+      const q = query(collection(db, "posts"), orderBy("createdAt", "desc"));
+      onSnapshot(q, (snapshot) => {
+        const postsList = document.getElementById('postsList');
+        postsList.innerHTML = "";
+        snapshot.forEach((docSnap) => {
+          const post = docSnap.data();
+          if (!post.isTrashed) renderPostCard(post, docSnap.id, postsList);
+        });
+      });
+    }
+
+    function loadUserPosts(uid) {
+      const q = query(collection(db, "posts"), where("userId", "==", uid));
+      onSnapshot(q, (snapshot) => {
+        const container = document.getElementById('userPostsList');
+        container.innerHTML = "";
+        snapshot.forEach((docSnap) => {
+          const post = docSnap.data();
+          if (!post.isTrashed) renderPostCard(post, docSnap.id, container);
+        });
+      });
+    }
+
+    function renderPostCard(post, postId, container) {
+      const myReaction = post.reactions ? post.reactions[currentUser.uid] : null;
+      const isOwner = post.userId === currentUser.uid;
+
+      const postEl = document.createElement('div');
+      postEl.className = 'card';
+      postEl.innerHTML = `
+        <div class="post-header">
+          <div class="post-user-info" onclick="openProfile('${post.userId}')">
+            <div class="avatar">${post.userName ? post.userName[0].toUpperCase() : 'U'}</div>
+            <div>
+              <strong>${post.userName}</strong>
+              ${post.feeling ? `<span style="color: var(--text-muted); font-size: 12px;"> is ${post.feeling}</span>` : ''}
+              <div style="font-size: 11px; color: var(--text-muted);">${post.privacy || 'Public'}</div>
+            </div>
+          </div>
+
+          <div class="dropdown-menu-wrap">
+            <button class="dropdown-btn" onclick="togglePostMenu('${postId}', event)">⋮</button>
+            <div class="dropdown-menu" id="postMenu-${postId}">
+              <div class="dropdown-item" onclick="copyPostLink('${postId}')">🔗 Copy Link</div>
+              ${isOwner ? `
+                <div class="dropdown-item" onclick="editPost('${postId}', '${encodeURIComponent(post.text || '')}')">✏️ Edit Post</div>
+                <div class="dropdown-item" onclick="movePostToTrash('${postId}')">🗑 Move to Trash</div>
+                <div class="dropdown-item" style="color:#ef4444;" onclick="deletePost('${postId}')">❌ Delete Permanently</div>
+              ` : ''}
+            </div>
+          </div>
+        </div>
+
+        ${post.text ? `<p id="postText-${postId}" style="white-space: pre-line;">${post.text}</p>` : ''}
+        ${post.imageUrl ? `<img src="${post.imageUrl}" class="post-image">` : ''}
+
+        <div class="post-actions">
+          <div class="reactions-wrapper">
+            <div class="reactions-box" id="reactBox-${postId}">
+              <span class="react-icon" onclick="setReaction('${postId}', '👍')">👍</span>
+              <span class="react-icon" onclick="setReaction('${postId}', '❤️')">❤️</span>
+              <span class="react-icon" onclick="setReaction('${postId}', '🤗')">🤗</span>
+              <span class="react-icon" onclick="setReaction('${postId}', '😆')">😆</span>
+              <span class="react-icon" onclick="setReaction('${postId}', '😮')">😮</span>
+              <span class="react-icon" onclick="setReaction('${postId}', '😢')">😢</span>
+              <span class="react-icon" onclick="setReaction('${postId}', '😡')">😡</span>
+            </div>
+            <button class="action-btn" onclick="toggleReactionBox('${postId}')">
+              ${myReaction || '👍'} ${Object.keys(post.reactions || {}).length}
+            </button>
+          </div>
+
+          <button class="action-btn" onclick="toggleComments('${postId}')">💬 ${post.comments?.length || 0}</button>
+          <button class="action-btn" onclick="sharePost('${postId}')">↗️ Share</button>
+        </div>
+
+        <div class="comments-sec hidden" id="comments-${postId}" style="margin-top: 10px;">
+          <div id="commentList-${postId}">
+            ${(post.comments || []).map(c => `<div style="background:#0f172a; padding:6px; border-radius:6px; margin:4px 0; font-size:12px;"><strong>${c.userName}:</strong> ${c.text}</div>`).join('')}
+          </div>
+          <input type="text" placeholder="Write comment..." onkeydown="addComment(event, '${postId}')">
+        </div>
+      `;
+      container.appendChild(postEl);
+    }
+
+    window.togglePostMenu = (id, event) => {
+      if (event) event.stopPropagation();
+      document.querySelectorAll('.dropdown-menu').forEach(menu => {
+        if (menu.id !== `postMenu-${id}`) menu.classList.remove('show');
+      });
+      document.getElementById(`postMenu-${id}`).classList.toggle('show');
+    };
+
+    window.editPost = async (postId, currentTextDecoded) => {
+      const oldText = decodeURIComponent(currentTextDecoded);
+      const newText = prompt("Edit your post text:", oldText);
+      if (newText !== null) {
+        await updateDoc(doc(db, "posts", postId), { text: newText });
+      }
+    };
+
+    window.movePostToTrash = async (postId) => {
+      if (confirm("Move this post to trash?")) {
+        await updateDoc(doc(db, "posts", postId), { isTrashed: true });
+      }
+    };
+
+    window.deletePost = async (postId) => {
+      if (confirm("Permanently delete this post?")) {
+        await deleteDoc(doc(db, "posts", postId));
+      }
+    };
+
+    window.sharePost = (postId) => {
+      copyPostLink(postId);
+      alert("Post link copied! You can now share it anywhere.");
+    };
+
+    window.copyPostLink = (postId) => {
+      const link = `${window.location.origin}#post-${postId}`;
+      navigator.clipboard.writeText(link);
+      alert("Post link copied to clipboard!");
+    };
+
+    window.toggleReactionBox = (id) => {
+      document.getElementById(`reactBox-${id}`).classList.toggle('show');
+    };
+
+    window.setReaction = async (postId, reaction) => {
+      const postRef = doc(db, "posts", postId);
+      const postDoc = await getDoc(postRef);
+      if (!postDoc.exists()) return;
+      const reactions = postDoc.data().reactions || {};
+      reactions[currentUser.uid] = reaction;
+      await updateDoc(postRef, { reactions });
+    };
+
+    window.toggleComments = (id) => document.getElementById(`comments-${id}`).classList.toggle('hidden');
+
+    window.addComment = async (e, postId) => {
+      if (e.key === 'Enter' && e.target.value.trim() !== '') {
+        await updateDoc(doc(db, "posts", postId), {
+          comments: arrayUnion({ userId: currentUser.uid, userName: currentUser.displayName || "User", text: e.target.value.trim() })
+        });
+        e.target.value = '';
+      }
+    };
+
+    // Messaging & Message Requests
+    window.switchChatSubTab = (tab) => {
+      currentChatSubTab = tab;
+      document.getElementById('primaryChatsTab').classList.toggle('active', tab === 'primary');
+      document.getElementById('requestChatsTab').classList.toggle('active', tab === 'requests');
+      renderChatUserList(allUsersCache);
+    };
+
+    function renderChatUserList(users) {
+      const container = document.getElementById('chatUserList');
+      container.innerHTML = "";
+
+      // 1. "Message Yourself / Saved Messages" Option
+      if (currentChatSubTab === 'primary') {
+        const selfDiv = document.createElement('div');
+        selfDiv.className = 'user-item';
+        selfDiv.style.background = "rgba(24, 119, 242, 0.08)";
+        selfDiv.style.borderRadius = "8px";
+        selfDiv.style.padding = "10px";
+        selfDiv.style.marginBottom = "8px";
+        selfDiv.innerHTML = `
+          <div style="display:flex; align-items:center; gap:8px;">
+            <span style="font-size:18px;">📌</span>
+            <div>
+              <strong>You (Saved Messages)</strong>
+              <div style="font-size:11px; color:var(--text-muted);">Message yourself / Notes</div>
+            </div>
+          </div>
+          <button class="btn-sm" onclick="openChat('${currentUser.uid}', 'Saved Messages (You)', 'single')">Notes</button>
+        `;
+        container.appendChild(selfDiv);
+      }
+
+      const myFriends = currentUserData?.friends || [];
+
+      // Filter based on Friends vs Non-Friends (Message Requests)
+      const targetUsers = users.filter(u => {
+        if (u.uid === currentUser.uid) return false;
+        const isFriend = myFriends.includes(u.uid);
+        return currentChatSubTab === 'primary' ? isFriend : !isFriend;
+      });
+
+      if (targetUsers.length === 0) {
+        container.innerHTML += `<p style="color:var(--text-muted); font-size:13px; text-align:center; padding:15px 0;">No ${currentChatSubTab === 'primary' ? 'friend chats' : 'message requests'}</p>`;
+      }
+
+      targetUsers.forEach(u => {
+        const div = document.createElement('div');
+        div.className = 'user-item';
+        const isOnline = u.activeStatus !== false && u.isOnline;
+
+        div.innerHTML = `
+          <div style="display:flex; align-items:center; gap:8px;">
+            <div class="avatar" style="width:32px; height:32px; font-size:12px;">
+              ${u.avatarUrl ? `<img src="${u.avatarUrl}">` : (u.name ? u.name[0].toUpperCase() : 'U')}
+              ${isOnline ? '<span class="active-dot"></span>' : ''}
+            </div>
+            <div>
+              <div style="font-weight:bold; font-size:13px;">${u.name}</div>
+              <div style="font-size:11px; color:var(--text-muted);">@${u.username || 'user'}</div>
+            </div>
+          </div>
+          <button class="btn-sm" onclick="openChat('${u.uid}', '${u.name}', 'single')">Message</button>
+        `;
+        container.appendChild(div);
+      });
+
+      // Group Chats in Primary Tab
+      if (currentChatSubTab === 'primary') {
+        onSnapshot(collection(db, "groupChats"), (snapshot) => {
+          snapshot.forEach(gDoc => {
+            const g = gDoc.data();
+            if ((g.members || []).includes(currentUser.uid)) {
+              const div = document.createElement('div');
+              div.className = 'user-item';
+              div.innerHTML = `<span>👥 <strong>${g.groupName}</strong></span><button class="btn-sm" onclick="openChat('${gDoc.id}', '${g.groupName}', 'group')">Open Group</button>`;
+              container.appendChild(div);
+            }
+          });
+        });
+      }
+    }
+
+    document.getElementById('execChatSearchBtn').onclick = () => {
+      const q = document.getElementById('chatSearchInput').value;
+      filterChatUsers(q);
+    };
+
+    window.filterChatUsers = (queryText) => {
+      const filtered = allUsersCache.filter(u => u.name.toLowerCase().includes(queryText.toLowerCase()) || u.username.toLowerCase().includes(queryText.toLowerCase()));
+      renderChatUserList(filtered);
+    };
+
+    document.getElementById('openCreateGroupBtn').onclick = () => {
+      const memberList = document.getElementById('groupMembersCheckboxList');
+      memberList.innerHTML = "";
+      allUsersCache.filter(u => u.uid !== currentUser.uid).forEach(u => {
+        memberList.innerHTML += `<label style="display:block; font-size:12px; margin:2px 0;"><input type="checkbox" value="${u.uid}"> ${u.name}</label>`;
+      });
+      document.getElementById('createGroupCard').classList.remove('hidden');
+    };
+
+    document.getElementById('cancelGroupBtn').onclick = () => {
+      document.getElementById('createGroupCard').classList.add('hidden');
+    };
+
+    document.getElementById('submitCreateGroupBtn').onclick = async () => {
+      const groupName = document.getElementById('groupNameInput').value.trim();
+      const checkboxes = document.querySelectorAll('#groupMembersCheckboxList input:checked');
+      const members = [currentUser.uid];
+      checkboxes.forEach(cb => members.push(cb.value));
+
+      if (!groupName || members.length < 2) return alert("Provide a group name and select at least 1 member.");
+
+      await addDoc(collection(db, "groupChats"), {
+        groupName: groupName,
+        members: members,
+        createdBy: currentUser.uid,
+        createdAt: serverTimestamp()
+      });
+
+      document.getElementById('groupNameInput').value = "";
+      document.getElementById('createGroupCard').classList.add('hidden');
+      alert("Group chat created!");
+    };
+
+    window.openChat = (targetId, targetName, type) => {
+      activeChatUid = targetId;
+      activeChatType = type;
+      document.getElementById('chatTargetName').innerText = targetName;
+      
+      const targetUser = allUsersCache.find(u => u.uid === targetId);
+      const isOnline = targetUser && targetUser.activeStatus !== false && targetUser.isOnline;
+      document.getElementById('chatTargetStatus').innerText = isOnline ? '🟢 Active Now' : '';
+
+      document.getElementById('chatBoxCard').classList.remove('hidden');
+
+      let messagesRef;
+      if (type === 'single') {
+        const chatId = [currentUser.uid, targetId].sort().join('_');
+        messagesRef = collection(db, "chats", chatId, "messages");
+      } else {
+        messagesRef = collection(db, "groupChats", targetId, "messages");
+      }
+
+      const q = query(messagesRef, orderBy("createdAt", "asc"));
+
+      if (chatUnsubscribe) chatUnsubscribe();
+      chatUnsubscribe = onSnapshot(q, (snapshot) => {
+        const container = document.getElementById('chatMessages');
+        container.innerHTML = "";
+        snapshot.forEach((docSnap) => {
+          const m = docSnap.data();
+          const bubble = document.createElement('div');
+          bubble.className = `msg-bubble ${m.senderId === currentUser.uid ? 'sent' : 'received'}`;
+          bubble.innerText = `${type === 'group' ? (m.senderName + ': ') : ''}${m.text}`;
+          container.appendChild(bubble);
+        });
+        container.scrollTop = container.scrollHeight;
+      });
+    };
+
+    document.getElementById('closeChatBtn').onclick = () => document.getElementById('chatBoxCard').classList.add('hidden');
+
+    document.getElementById('sendMsgBtn').onclick = async () => {
+      const input = document.getElementById('chatInputText');
+      if (!input.value.trim() || !activeChatUid) return;
+
+      let messagesRef;
+      if (activeChatType === 'single') {
+        const chatId = [currentUser.uid, activeChatUid].sort().join('_');
+        messagesRef = collection(db, "chats", chatId, "messages");
+      } else {
+        messagesRef = collection(db, "groupChats", activeChatUid, "messages");
+      }
+
+      await addDoc(messagesRef, {
+        senderId: currentUser.uid,
+        senderName: currentUser.displayName || "User",
+        text: input.value.trim(),
+        createdAt: serverTimestamp()
+      });
+      input.value = "";
+    };
+
+    // Settings Configuration
+    async function loadSettingsData() {
+      const uDoc = await getDoc(doc(db, "users", currentUser.uid));
+      if (uDoc.exists()) {
+        const u = uDoc.data();
+        document.getElementById('setN').value = u.name || "";
+        document.getElementById('setBio').value = u.bio || "";
+        document.getElementById('setDob').value = u.dob || "";
+        document.getElementById('setWork').value = u.work || "";
+        document.getElementById('setEmailDisplay').value = u.email || currentUser.email;
+        document.getElementById('setEmailPrivacy').value = u.emailPrivacy || "Public";
+        document.getElementById('setPhone').value = u.phone || "";
+        document.getElementById('setLoc').value = u.location || "";
+        document.getElementById('setPrivacy').value = u.privacy || "Public";
+        document.getElementById('setActiveStatusSetting').value = u.activeStatus !== false ? "true" : "false";
+      }
+    }
+
+    document.getElementById('saveSettingsBtn').onclick = async () => {
+      const name = document.getElementById('setN').value.trim();
+      const bio = document.getElementById('setBio').value.trim();
+      const dob = document.getElementById('setDob').value;
+      const work = document.getElementById('setWork').value.trim();
+      const emailPrivacy = document.getElementById('setEmailPrivacy').value;
+      const phone = document.getElementById('setPhone').value.trim();
+      const location = document.getElementById('setLoc').value.trim();
+      const privacy = document.getElementById('setPrivacy').value;
+      const activeStatus = document.getElementById('setActiveStatusSetting').value === "true";
+
+      await updateDoc(doc(db, "users", currentUser.uid), {
+        name, bio, dob, work, emailPrivacy, phone, location, privacy, activeStatus
+      });
+      await updateProfile(currentUser, { displayName: name });
+      alert("Settings updated successfully!");
+      openProfile(currentUser.uid);
+    };
+
+    // Friends & Users Handling
+    function loadUsersAndRequests() {
+      onSnapshot(doc(db, "users", currentUser.uid), async (docSnap) => {
+        const myData = docSnap.data();
+        if (!myData) return;
+
+        const reqList = document.getElementById('requestsList');
+        reqList.innerHTML = "";
+        for (let reqUid of myData.requestsReceived || []) {
+          const userDoc = await getDoc(doc(db, "users", reqUid));
+          if (userDoc.exists()) {
+            const div = document.createElement('div');
+            div.className = 'user-item';
+            div.innerHTML = `<span>${userDoc.data().name}</span><button class="btn-sm" onclick="acceptRequest('${reqUid}')">Accept</button>`;
+            reqList.appendChild(div);
+          }
+        }
+      });
+
+      onSnapshot(collection(db, "users"), (snapshot) => {
+        const usersList = document.getElementById('usersList');
+        usersList.innerHTML = "";
+        snapshot.forEach((uDoc) => {
+          const u = uDoc.data();
+          if (u.uid !== currentUser.uid) {
+            const div = document.createElement('div');
+            div.className = 'user-item';
+            div.innerHTML = `<span onclick="openProfile('${u.uid}')">${u.name}</span><button class="btn-secondary btn-sm" onclick="sendFriendRequest('${u.uid}')">Add Friend</button>`;
+            usersList.appendChild(div);
+          }
+        });
+      });
+    }
+
+    window.sendFriendRequest = async (uid) => {
+      await updateDoc(doc(db, "users", uid), { requestsReceived: arrayUnion(currentUser.uid) });
+      alert("Friend request sent!");
+    };
+
+    window.acceptRequest = async (uid) => {
+      await updateDoc(doc(db, "users", currentUser.uid), { friends: arrayUnion(uid), requestsReceived: arrayRemove(uid) });
+      await updateDoc(doc(db, "users", uid), { friends: arrayUnion(currentUser.uid) });
+      alert("Friend request accepted!");
+    };
+
+    const convertBase64 = (file) => new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = error => reject(error);
+    });
+  </script>
+</body>
+</html>
