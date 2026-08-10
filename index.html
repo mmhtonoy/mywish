@@ -127,6 +127,13 @@
     @keyframes pulseRecord { 50% { opacity:.55; } }
     .chat-image-preview { max-width:140px; max-height:100px; border-radius:8px; display:none; margin:5px 0; }
     .chat-target-status { font-size:11px; color:var(--text-muted); }
+    .chat-composer-status { min-height:18px; margin-top:5px; font-size:11px; color:var(--text-muted); text-align:center; }
+    .msg-status-label { font-size:9px; opacity:.9; }
+    .msg-status.sent-status { color:#dbeafe; }
+    .msg-status.delivered-status { color:#bfdbfe; }
+    .msg-status.seen-status { color:#86efac; }
+    .voice-recording { background:#dc2626 !important; color:#fff !important; }
+    .voice-recording::after { content:' REC'; font-size:9px; }
 
     .user-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border); }
     .user-item:last-child { border: none; }
@@ -310,13 +317,14 @@
             <div class="chat-messages" id="chatMessages"></div>
             <img id="chatImagePreview" class="chat-image-preview" alt="Selected photo preview">
             <div class="chat-composer">
-              <label for="chatImageInput" class="chat-icon-btn" title="Send photo" style="cursor:pointer;">📷</label>
+              <label for="chatImageInput" class="chat-icon-btn" title="Choose photo" style="cursor:pointer;">📷</label>
               <input type="file" id="chatImageInput" accept="image/*" style="display:none;">
-              <button id="voiceMsgBtn" class="chat-icon-btn" title="Record voice message">🎙️</button>
+              <button id="voiceMsgBtn" type="button" class="chat-icon-btn" title="Tap to start/stop voice recording">🎙️</button>
               <span id="voiceRecordTime" class="voice-time hidden">00:00</span>
-              <input type="text" id="chatInputText" placeholder="Write a message..." style="margin: 0; flex:1;" onkeydown="if(event.key==='Enter') document.getElementById('sendMsgBtn').click()">
-              <button id="sendMsgBtn" class="chat-send-btn">Send</button>
+              <input type="text" id="chatInputText" placeholder="Write a message..." style="margin: 0; flex:1;" onkeydown="if(event.key==='Enter' && !event.shiftKey){event.preventDefault(); document.getElementById('sendMsgBtn').click();}">
+              <button id="sendMsgBtn" type="button" class="chat-send-btn">Send</button>
             </div>
+            <div id="chatComposerStatus" class="chat-composer-status"></div>
           </div>
         </div>
       </div>
@@ -822,7 +830,7 @@
           const writes = [];
           snapshot.forEach(docSnap => {
             const m = docSnap.data();
-            if (m.senderId !== currentUser.uid && m.status === 'sent') {
+            if (m.senderId !== currentUser.uid && m.status !== 'delivered' && m.status !== 'seen') {
               writes.push(updateDoc(doc(db, 'chats', chatId, 'messages', docSnap.id), {
                 status: 'delivered', deliveredAt: serverTimestamp()
               }));
@@ -1756,16 +1764,19 @@
 
     function messageStatusHtml(m) {
       if (m.senderId !== currentUser.uid) return '';
+      let label = 'Sent';
+      let cls = 'sent-status';
+      let icon = '✓';
       if (activeChatType === 'group') {
         const seenCount = Array.isArray(m.seenBy) ? m.seenBy.length : 0;
         const deliveredCount = Array.isArray(m.deliveredTo) ? m.deliveredTo.length : 0;
-        if (seenCount > 0) return `<span class="msg-status" title="Seen by ${seenCount}">✓✓</span>`;
-        if (deliveredCount > 0) return `<span class="msg-status" title="Delivered to ${deliveredCount}">✓✓</span>`;
-        return `<span class="msg-status" title="Sent">✓</span>`;
+        if (seenCount > 0) { label = 'Seen'; cls = 'seen-status'; icon = '✓✓'; }
+        else if (deliveredCount > 0) { label = 'Delivered'; cls = 'delivered-status'; icon = '✓✓'; }
+      } else {
+        if (m.status === 'seen') { label = 'Seen'; cls = 'seen-status'; icon = '✓✓'; }
+        else if (m.status === 'delivered') { label = 'Delivered'; cls = 'delivered-status'; icon = '✓✓'; }
       }
-      if (m.status === 'seen') return '<span class="msg-status" title="Seen">✓✓</span>';
-      if (m.status === 'delivered') return '<span class="msg-status" title="Delivered">✓✓</span>';
-      return '<span class="msg-status" title="Sent">✓</span>';
+      return `<span class="msg-status ${cls}" title="${label}">${icon} <span class="msg-status-label">${label}</span></span>`;
     }
 
     function renderMessageBubble(m) {
@@ -1927,19 +1938,90 @@
       await addDoc(messagesRef, message);
     }
 
+    function setComposerStatus(text, error=false) {
+      const el = document.getElementById('chatComposerStatus');
+      if (!el) return;
+      el.innerText = text || '';
+      el.style.color = error ? '#fca5a5' : 'var(--text-muted)';
+    }
+
+    function withTimeout(promise, ms, message) {
+      return Promise.race([promise, new Promise((_, reject) => setTimeout(() => reject(new Error(message)), ms))]);
+    }
+
+    async function uploadChatBlob(blob, fileName, contentType) {
+      const path = `chatMedia/${currentUser.uid}/${fileName}`;
+      const fileRef = storageRef(storage, path);
+      await withTimeout(uploadBytes(fileRef, blob, { contentType }), 30000, 'Upload timed out. Check Firebase Storage Rules / internet connection.');
+      return await withTimeout(getDownloadURL(fileRef), 15000, 'Could not get media URL from Firebase Storage.');
+    }
+
+    function blobToDataUrl(blob) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+      });
+    }
+
+    function compressChatPhoto(file, maxWidth=1280, quality=0.72) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onerror = reject;
+        reader.onload = () => {
+          const img = new Image();
+          img.onerror = reject;
+          img.onload = () => {
+            const scale = Math.min(1, maxWidth / img.width);
+            const canvas = document.createElement('canvas');
+            canvas.width = Math.max(1, Math.round(img.width * scale));
+            canvas.height = Math.max(1, Math.round(img.height * scale));
+            const ctx = canvas.getContext('2d', {alpha:false});
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+            canvas.toBlob(blob => blob ? resolve(blob) : reject(new Error('Could not compress photo.')), 'image/jpeg', quality);
+          };
+          img.src = reader.result;
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+
+    async function uploadVoiceWithFallback(blob, fileName, contentType) {
+      try {
+        return await uploadChatBlob(blob, fileName, contentType);
+      } catch (storageErr) {
+        // Small voice messages can still work if Firebase Storage Rules are not configured yet.
+        // Keep them below Firestore's 1 MiB document limit.
+        if (blob.size <= 550 * 1024) {
+          setComposerStatus('Storage unavailable — using secure chat fallback…');
+          return await blobToDataUrl(blob);
+        }
+        throw new Error(storageErr.message + ' Voice file is too large for fallback storage.');
+      }
+    }
+
     async function sendPendingChatPhoto() {
       const file = pendingChatPhotoFile;
       if (!file || !activeChatUid) return false;
       try {
+        setComposerStatus('📤 Uploading photo…');
         const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
-        const path = `chatMedia/${currentUser.uid}/photo_${Date.now()}_${safeName}`;
-        const fileRef = storageRef(storage, path);
-        await uploadBytes(fileRef, file, { contentType: file.type });
-        const url = await getDownloadURL(fileRef);
-        await sendChatMessage({ type: 'image', mediaUrl: url, fileName: safeName, mimeType: file.type });
+        const compressedPhoto = await compressChatPhoto(file);
+        let url;
+        try {
+          url = await uploadChatBlob(compressedPhoto, `photo_${Date.now()}_${safeName}.jpg`, 'image/jpeg');
+        } catch (storageErr) {
+          // Fallback for compressed photos so sending still works if Storage Rules are not configured.
+          if (compressedPhoto.size <= 700 * 1024) url = await blobToDataUrl(compressedPhoto);
+          else throw storageErr;
+        }
+        await sendChatMessage({ type: 'image', mediaUrl: url, fileName: safeName, mimeType: 'image/jpeg' });
         clearPendingChatPhoto();
+        setComposerStatus('✓ Photo sent');
         return true;
       } catch (err) {
+        setComposerStatus('Photo failed: ' + err.message, true);
         alert('Photo send failed: ' + err.message);
         return false;
       }
@@ -1948,40 +2030,40 @@
     function clearPendingChatPhoto() {
       pendingChatPhotoFile = null;
       const preview = document.getElementById('chatImagePreview');
-      if (preview.dataset.objectUrl) {
-        URL.revokeObjectURL(preview.dataset.objectUrl);
-        delete preview.dataset.objectUrl;
-      }
+      if (preview.dataset.objectUrl) { URL.revokeObjectURL(preview.dataset.objectUrl); delete preview.dataset.objectUrl; }
       preview.style.display = 'none';
       preview.removeAttribute('src');
       document.getElementById('chatImageInput').value = '';
-      document.getElementById('sendMsgBtn').innerText = 'Send';
+      const btn = document.getElementById('sendMsgBtn');
+      if (!isRecordingVoice) btn.innerText = 'Send';
     }
 
     document.getElementById('sendMsgBtn').onclick = async () => {
       if (!activeChatUid) return;
-      if (pendingChatPhotoFile) {
-        const btn = document.getElementById('sendMsgBtn');
-        btn.disabled = true;
-        btn.innerText = 'Sending…';
-        await sendPendingChatPhoto();
-        btn.disabled = false;
-        if (!pendingChatPhotoFile) btn.innerText = 'Send';
-        return;
-      }
-
-      const input = document.getElementById('chatInputText');
-      const text = input.value.trim();
-      if (!text) return;
+      const btn = document.getElementById('sendMsgBtn');
+      if (isRecordingVoice) { setComposerStatus('⏹️ Stop recording first.'); return; }
+      btn.disabled = true;
       try {
+        if (pendingChatPhotoFile) {
+          btn.innerText = 'Sending…';
+          await sendPendingChatPhoto();
+          return;
+        }
+        const input = document.getElementById('chatInputText');
+        const text = input.value.trim();
+        if (!text) return;
         await sendChatMessage({ type: 'text', text });
         input.value = '';
+        setComposerStatus('✓ Sent');
       } catch (err) {
         alert('Message failed to send: ' + err.message);
+        setComposerStatus('Message failed: ' + err.message, true);
+      } finally {
+        btn.disabled = false;
+        if (!pendingChatPhotoFile) btn.innerText = 'Send';
       }
     };
 
-    // Select a photo first; it is uploaded only when Send is pressed.
     document.getElementById('chatImageInput').onchange = (e) => {
       const file = e.target.files[0];
       if (!file || !activeChatUid) return;
@@ -1995,6 +2077,7 @@
       preview.src = objectUrl;
       preview.style.display = 'block';
       document.getElementById('sendMsgBtn').innerText = 'Send Photo';
+      setComposerStatus('📷 Photo selected — press Send Photo');
     };
 
     function formatVoiceDuration(ms) {
@@ -2006,107 +2089,92 @@
 
     function updateVoiceTimer() {
       if (!voiceRecordStartedAt) return;
-      const elapsed = Date.now() - voiceRecordStartedAt;
-      document.getElementById('voiceRecordTime').innerText = formatVoiceDuration(elapsed);
+      document.getElementById('voiceRecordTime').innerText = formatVoiceDuration(Date.now() - voiceRecordStartedAt);
     }
 
     async function startVoiceRecording() {
-      if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === 'undefined') {
-        alert('Voice recording is not supported by this browser.');
-        return;
+      if (!activeChatUid) { alert('Open a chat first.'); return; }
+      if (!window.isSecureContext) { alert('Microphone needs HTTPS. Please open the GitHub Pages HTTPS address.'); return; }
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia || typeof MediaRecorder === 'undefined') {
+        alert('This browser does not support voice recording. Try the latest Chrome.'); return;
       }
-      if (!activeChatUid) return;
+      if (isRecordingVoice) return;
 
+      const btn = document.getElementById('voiceMsgBtn');
       try {
-        recordingCancelled = false;
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        btn.innerText = '⏳';
+        btn.disabled = true;
+        setComposerStatus('🎙️ Requesting microphone permission…');
+        const stream = await withTimeout(navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true, noiseSuppression:true, autoGainControl:true}}), 15000, 'Microphone permission timed out.');
         recordingStream = stream;
         recordedAudioChunks = [];
 
-        const mimeCandidates = [
-          'audio/webm;codecs=opus', 'audio/webm',
-          'audio/ogg;codecs=opus', 'audio/ogg', 'audio/mp4'
-        ];
-        const mimeType = mimeCandidates.find(t => MediaRecorder.isTypeSupported(t)) || '';
-        const recorder = mimeType ? new MediaRecorder(stream, { mimeType }) : new MediaRecorder(stream);
+        const candidates = ['audio/webm;codecs=opus','audio/webm','audio/ogg;codecs=opus','audio/ogg','audio/mp4'];
+        const mimeType = candidates.find(t => MediaRecorder.isTypeSupported(t)) || '';
+        const recorder = mimeType ? new MediaRecorder(stream, {mimeType, audioBitsPerSecond: 16000}) : new MediaRecorder(stream, {audioBitsPerSecond: 16000});
         mediaRecorder = recorder;
+        recordingCancelled = false;
 
-        recorder.ondataavailable = (e) => {
-          if (e.data && e.data.size > 0) recordedAudioChunks.push(e.data);
+        recorder.ondataavailable = e => { if (e.data && e.data.size) recordedAudioChunks.push(e.data); };
+        recorder.onerror = e => {
+          const msg = e?.error?.message || 'Recorder error';
+          if (recordingStream) recordingStream.getTracks().forEach(t => t.stop());
+          recordingStream = null;
+          resetVoiceUi();
+          alert('Voice recording error: ' + msg);
         };
-
         recorder.onstop = async () => {
           const duration = Date.now() - voiceRecordStartedAt;
-          const actualMime = recorder.mimeType || mimeType || 'audio/webm';
           const chunks = recordedAudioChunks.slice();
-          if (recordingStream) {
-            recordingStream.getTracks().forEach(track => track.stop());
-            recordingStream = null;
-          }
+          const actualMime = recorder.mimeType || mimeType || 'audio/webm';
+          if (recordingStream) recordingStream.getTracks().forEach(t => t.stop());
+          recordingStream = null;
 
-          if (recordingCancelled) {
-            resetVoiceUi();
-            return;
-          }
-
-          const blob = new Blob(chunks, { type: actualMime });
-          if (duration < 700 || blob.size < 500) {
-            alert('Voice message is too short.');
-            resetVoiceUi();
-            return;
-          }
+          if (recordingCancelled) { resetVoiceUi(); return; }
+          const blob = new Blob(chunks, {type: actualMime});
+          if (duration < 500 || blob.size < 300) { resetVoiceUi(); alert('Voice message is too short.'); return; }
 
           try {
+            setComposerStatus('📤 Sending voice message…');
             const ext = actualMime.includes('ogg') ? 'ogg' : actualMime.includes('mp4') ? 'm4a' : 'webm';
-            const path = `chatMedia/${currentUser.uid}/voice_${Date.now()}.${ext}`;
-            const fileRef = storageRef(storage, path);
-            await uploadBytes(fileRef, blob, { contentType: actualMime });
-            const url = await getDownloadURL(fileRef);
-            await sendChatMessage({ type: 'audio', mediaUrl: url, mimeType: actualMime, duration });
+            const url = await uploadVoiceWithFallback(blob, `voice_${Date.now()}.${ext}`, actualMime);
+            await sendChatMessage({type:'audio', mediaUrl:url, mimeType:actualMime, duration});
+            setComposerStatus('✓ Voice message sent');
           } catch (err) {
-            alert('Voice message failed to send: ' + err.message);
-          } finally {
-            resetVoiceUi();
-          }
-        };
-
-        recorder.onerror = () => {
-          if (recordingStream) {
-            recordingStream.getTracks().forEach(track => track.stop());
-            recordingStream = null;
-          }
-          alert('Voice recording error. Please try again.');
-          resetVoiceUi();
+            alert('Voice message failed: ' + err.message);
+            setComposerStatus('Voice failed: ' + err.message, true);
+          } finally { resetVoiceUi(); }
         };
 
         recorder.start(250);
         isRecordingVoice = true;
         voiceRecordStartedAt = Date.now();
-        document.getElementById('voiceMsgBtn').classList.add('voice-recording');
-        document.getElementById('voiceMsgBtn').innerText = '⏹️ Stop';
+        btn.disabled = false;
+        btn.classList.add('voice-recording');
+        btn.innerText = '⏹️';
         document.getElementById('voiceRecordTime').classList.remove('hidden');
         updateVoiceTimer();
         voiceRecordTimer = setInterval(updateVoiceTimer, 250);
+        setComposerStatus('🔴 Recording… tap ⏹️ to stop and send (max 30s)');
+        setTimeout(() => { if (isRecordingVoice && mediaRecorder === recorder) stopVoiceRecording(false); }, 30000);
       } catch (err) {
-        if (recordingStream) {
-          recordingStream.getTracks().forEach(track => track.stop());
-          recordingStream = null;
-        }
-        alert('Microphone permission is required: ' + err.message);
+        if (recordingStream) recordingStream.getTracks().forEach(t => t.stop());
+        recordingStream = null;
+        resetVoiceUi();
+        alert('Microphone could not start: ' + err.message + '\n\nCheck Chrome → Site settings → Microphone → Allow.');
+        setComposerStatus('Microphone not available', true);
       }
     }
 
-    function stopVoiceRecording(cancelOnly = false) {
-      if (!mediaRecorder || mediaRecorder.state === 'inactive') {
-        if (recordingStream) {
-          recordingStream.getTracks().forEach(track => track.stop());
-          recordingStream = null;
-        }
-        resetVoiceUi();
+    function stopVoiceRecording(cancelOnly=false) {
+      recordingCancelled = cancelOnly;
+      if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+        mediaRecorder.stop();
         return;
       }
-      recordingCancelled = cancelOnly;
-      mediaRecorder.stop();
+      if (recordingStream) recordingStream.getTracks().forEach(t => t.stop());
+      recordingStream = null;
+      resetVoiceUi();
     }
 
     function resetVoiceUi() {
@@ -2114,16 +2182,17 @@
       voiceRecordTimer = null;
       isRecordingVoice = false;
       voiceRecordStartedAt = 0;
-      document.getElementById('voiceMsgBtn').classList.remove('voice-recording');
-      document.getElementById('voiceMsgBtn').innerText = '🎙️';
-      document.getElementById('voiceRecordTime').classList.add('hidden');
-      document.getElementById('voiceRecordTime').innerText = '00:00';
+      const btn = document.getElementById('voiceMsgBtn');
+      if (btn) { btn.classList.remove('voice-recording'); btn.disabled = false; btn.innerText = '🎙️'; }
+      const time = document.getElementById('voiceRecordTime');
+      if (time) { time.classList.add('hidden'); time.innerText = '00:00'; }
       mediaRecorder = null;
       recordedAudioChunks = [];
       recordingCancelled = false;
     }
 
-    document.getElementById('voiceMsgBtn').onclick = () => {
+    document.getElementById('voiceMsgBtn').onclick = (e) => {
+      e.preventDefault();
       if (isRecordingVoice) stopVoiceRecording(false);
       else startVoiceRecording();
     };
