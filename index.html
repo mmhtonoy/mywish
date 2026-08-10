@@ -45,12 +45,16 @@
     .btn-secondary { background: #334155; }
     .btn-danger { background: #ef4444; }
     .btn-danger:hover { background: #dc2626; }
+    .btn-success { background: #22c55e; }
     .btn-sm { width: auto; padding: 6px 12px; font-size: 12px; margin: 0; }
     
     .tabs { display: flex; justify-content: space-around; background: var(--card-bg); padding: 8px 0; border-radius: 12px; border: 1px solid var(--border); margin-bottom: 15px; }
-    .tab-btn { flex: 1; display: flex; justify-content: center; align-items: center; padding: 10px; color: var(--text-muted); cursor: pointer; border-radius: 8px; transition: 0.2s; }
+    .tab-btn { flex: 1; display: flex; justify-content: center; align-items: center; padding: 10px; color: var(--text-muted); cursor: pointer; border-radius: 8px; transition: 0.2s; position: relative; }
     .tab-btn svg { width: 24px; height: 24px; fill: currentColor; }
     .tab-btn.active { color: var(--primary); background: rgba(24, 119, 242, 0.1); border-bottom: 3px solid var(--primary); }
+
+    /* Notification Badges on Tabs */
+    .tab-badge { position: absolute; top: 4px; right: 18px; background: #ef4444; color: white; font-size: 10px; font-weight: bold; padding: 2px 6px; border-radius: 10px; min-width: 16px; text-align: center; }
 
     /* Stories Bar */
     .stories-container { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 8px; margin-bottom: 15px; }
@@ -110,6 +114,11 @@
     .user-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border); }
     .user-item:last-child { border: none; }
     
+    /* Friends horizontal list on Profile */
+    .friends-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 10px; margin-top: 10px; }
+    .friend-card { background: #0f172a; padding: 8px; border-radius: 8px; text-align: center; cursor: pointer; border: 1px solid var(--border); }
+    .friend-card-avatar { width: 45px; height: 45px; border-radius: 50%; background: var(--primary); margin: 0 auto 6px; display: flex; align-items: center; justify-content: center; font-weight: bold; overflow: hidden; }
+
     /* Lock Profile Badge */
     .profile-locked-box { background: rgba(239,68,68,0.1); border: 1px solid #ef4444; border-radius: 8px; padding: 10px; text-align: center; margin-top: 10px; font-size: 13px; color: #f87171; }
 
@@ -162,9 +171,11 @@
         </div>
         <div class="tab-btn" id="friendsTab" title="Friends">
           <svg viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
+          <span id="friendsBadge" class="tab-badge hidden">0</span>
         </div>
         <div class="tab-btn" id="messagesTab" title="Messages">
           <svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 9h12v2H6V9zm8 5H6v-2h8v2zm4-6H6V6h12v2z"/></svg>
+          <span id="messagesBadge" class="tab-badge hidden">0</span>
         </div>
         <div class="tab-btn" id="profileTab" title="Profile">
           <svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
@@ -246,7 +257,7 @@
             <span class="chat-tab-btn" id="requestChatsTab" onclick="switchChatSubTab('requests')">Message Requests (<span id="msgRequestCount">0</span>)</span>
           </div>
 
-          <!-- Message Search Bar with Small Search Button -->
+          <!-- Message Search Bar -->
           <div id="chatSearchBoxArea" style="display: flex; gap: 6px; margin-bottom: 10px;">
             <input type="text" id="chatSearchInput" placeholder="Search conversations..." style="margin:0;">
             <button id="execChatSearchBtn" class="btn-secondary btn-sm" style="padding: 0 12px; font-size:14px;">🔍</button>
@@ -290,7 +301,7 @@
       <div id="profileView" class="hidden">
         <div class="card" style="text-align: center;">
           
-          <!-- FB-Style Profile Options Menu Header -->
+          <!-- Profile Options Menu Header -->
           <div style="position: absolute; right: 12px; top: 12px;">
             <div class="dropdown-menu-wrap">
               <button class="dropdown-btn" onclick="toggleProfileMenu(event)">⋮</button>
@@ -307,7 +318,7 @@
           <div class="profile-avatar-wrapper" style="position: relative; width: 90px; height: 90px; margin: 0 auto 10px;">
             <div class="avatar" id="pAvatar" style="width: 100%; height: 100%; font-size: 32px;">U</div>
             <label for="profileAvatarInput" style="position: absolute; bottom: 0; right: 0; background: var(--primary); border-radius: 50%; padding: 6px; cursor: pointer;">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="white"><path d="M12 15c1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3 1.34 3 3 3zm9-9h-3.17l-1.86-2H8.03L6.17 6H3c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-9 13c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5z"/></svg>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="white"><path d="M12 15c1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3 1.34 3 3 3zm9-9h-3.17l-1.86-2H8.03L6.17 6H3c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-9 13c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5-2.24 5-5 5z"/></svg>
             </label>
             <input type="file" id="profileAvatarInput" accept="image/*" style="display: none;">
           </div>
@@ -316,11 +327,15 @@
           <p id="pUsername" style="color: var(--primary); font-size: 14px;">@username</p>
           <p id="pBio" style="margin-top: 6px; font-size: 14px; color: var(--text-muted);">No bio available</p>
 
+          <!-- Friend Request Dynamic Action Button for visiting profiles -->
+          <div id="profileFriendActionButtonArea" style="margin-top: 10px;"></div>
+
           <!-- Locked Profile Indicator -->
           <div id="lockedProfileBanner" class="profile-locked-box hidden">
             🔒 This Profile is Locked. Only friends can view full profile details and posts.
           </div>
 
+          <!-- Details & Friends Section -->
           <div id="profileDetailsArea" style="text-align: left; margin-top: 15px; border-top: 1px solid var(--border); padding-top: 12px; font-size: 13px;">
             <div style="margin: 6px 0;">📧 Email: <span id="pEmail">Hidden</span></div>
             <div style="margin: 6px 0;">🎂 Date of Birth: <span id="pDob">Not set</span></div>
@@ -328,6 +343,12 @@
             <div style="margin: 6px 0;">📞 Phone: <span id="pPhone">Not set</span></div>
             <div style="margin: 6px 0;">📍 Location: <span id="pLocation">Not set</span></div>
             <div style="margin: 6px 0;">🔒 Profile Privacy: <span id="pPrivacy">Public</span></div>
+
+            <!-- Profile Friends Grid -->
+            <div style="margin-top: 15px; border-top: 1px solid var(--border); padding-top: 12px;">
+              <h4 style="font-size: 14px;">👥 Friends (<span id="pFriendCount">0</span>)</h4>
+              <div id="pFriendsGrid" class="friends-grid"></div>
+            </div>
           </div>
         </div>
 
@@ -365,11 +386,17 @@
       <!-- Friends View -->
       <div id="friendsView" class="hidden">
         <div class="card">
-          <h3>Friend Requests</h3>
+          <h3>Friend Requests (<span id="reqCountText">0</span>)</h3>
           <div id="requestsList"><p style="color: var(--text-muted); margin-top: 10px;">No pending requests</p></div>
         </div>
+
         <div class="card">
-          <h3>All Users</h3>
+          <h3>My Friends (<span id="myFriendsCountText">0</span>)</h3>
+          <div id="myFriendsList"><p style="color: var(--text-muted); margin-top: 10px;">No friends added yet</p></div>
+        </div>
+
+        <div class="card">
+          <h3>All Users / Suggestions</h3>
           <div id="usersList"></div>
         </div>
       </div>
@@ -492,12 +519,11 @@
     let chatUnsubscribe = null;
     let currentStoryData = null;
     let allUsersCache = [];
-    let currentChatSubTab = "primary"; // 'primary' or 'requests'
+    let currentChatSubTab = "primary";
     let viewedProfileUid = null;
 
-    // Global Click Event Handler for Auto Hide & Clear Input
+    // Global Click Event Handler for Auto Hide
     document.addEventListener('click', (e) => {
-      // 1. Header Search Clear
       const searchArea = document.getElementById('headerSearchArea');
       if (searchArea && !searchArea.contains(e.target)) {
         const dropdown = document.getElementById('searchResultsDropdown');
@@ -506,7 +532,6 @@
         if (searchInput) searchInput.value = '';
       }
 
-      // 2. Chat Search Clear & Reset List
       const chatSearchBox = document.getElementById('chatSearchBoxArea');
       if (chatSearchBox && !chatSearchBox.contains(e.target)) {
         const chatSearchInput = document.getElementById('chatSearchInput');
@@ -516,7 +541,6 @@
         }
       }
 
-      // 3. Hide all open action menus if clicking outside
       const isDropdownBtn = e.target.closest('.dropdown-btn');
       const isDropdownMenu = e.target.closest('.dropdown-menu');
       if (!isDropdownBtn && !isDropdownMenu) {
@@ -550,7 +574,7 @@
         if (isSignUpMode) {
           const res = await createUserWithEmailAndPassword(auth, email, password);
           await updateProfile(res.user, { displayName: name });
-          await setDoc(doc(db, "users", res.user.uid), {
+          await setDoc(doc(docRef(db, "users", res.user.uid)), {
             uid: res.user.uid, name, username, email, dob: "",
             bio: "", work: "", phone: "", location: "",
             avatarUrl: "", privacy: "Public", emailPrivacy: "Public", activeStatus: true, isLocked: false,
@@ -577,26 +601,56 @@
         currentUser = user;
         authScreen.classList.add('hidden');
         appScreen.classList.remove('hidden');
-        
         document.getElementById('headerSearchArea').classList.remove('hidden');
 
-        // Set user online
         await updateDoc(doc(db, "users", user.uid), { isOnline: true });
 
+        listenToMyData();
         listenToAllUsers();
         loadPosts();
         loadStories();
-        loadUsersAndRequests();
       } else {
         currentUser = null;
         authScreen.classList.remove('hidden');
         appScreen.classList.add('hidden');
-
         document.getElementById('headerSearchArea').classList.add('hidden');
       }
     });
 
-    // Real-Time Users Listener
+    // Real-Time Current User Document Listener for Notifications & Badges
+    function listenToMyData() {
+      if (!currentUser) return;
+      onSnapshot(doc(db, "users", currentUser.uid), (docSnap) => {
+        if (!docSnap.exists()) return;
+        currentUserData = docSnap.data();
+
+        const requests = currentUserData.requestsReceived || [];
+        const friends = currentUserData.friends || [];
+
+        // 1. Friends Badge Notification Update
+        const fBadge = document.getElementById('friendsBadge');
+        if (fBadge) {
+          fBadge.innerText = requests.length;
+          fBadge.classList.toggle('hidden', requests.length === 0);
+        }
+
+        document.getElementById('reqCountText').innerText = requests.length;
+        document.getElementById('myFriendsCountText').innerText = friends.length;
+
+        // 2. Render Pending Friend Requests
+        renderRequestsList(requests);
+
+        // 3. Render My Friends List
+        renderMyFriendsList(friends);
+
+        // 4. Update Profile Friends Grid if Profile active
+        if (viewedProfileUid === currentUser.uid) {
+          renderProfileFriendsList(friends);
+        }
+      });
+    }
+
+    // Real-Time All Users Listener
     function listenToAllUsers() {
       onSnapshot(collection(db, "users"), (snapshot) => {
         allUsersCache = [];
@@ -607,13 +661,22 @@
             currentUserData = data;
           }
         });
+
+        // Refresh dynamic UI views
+        if (document.getElementById('friendsTab').classList.contains('active')) {
+          renderUsersSuggestions();
+          if (currentUserData) {
+            renderRequestsList(currentUserData.requestsReceived || []);
+            renderMyFriendsList(currentUserData.friends || []);
+          }
+        }
         if (document.getElementById('messagesTab').classList.contains('active')) {
           renderChatUserList(allUsersCache);
         }
       });
     }
 
-    // Nav Tabs
+    // Navigation Tabs Switcher
     const tabs = ['feed', 'friends', 'messages', 'profile', 'settings'];
     tabs.forEach(t => {
       document.getElementById(`${t}Tab`).onclick = () => switchTab(t);
@@ -626,10 +689,11 @@
       });
       if (tab === 'profile') openProfile(currentUser.uid);
       if (tab === 'messages') renderChatUserList(allUsersCache);
+      if (tab === 'friends') renderUsersSuggestions();
       if (tab === 'settings') loadSettingsData();
     }
 
-    // Public Search
+    // Public User Search
     window.searchPublicUsers = (val) => {
       const queryText = val.toLowerCase().trim();
       const dropdown = document.getElementById('searchResultsDropdown');
@@ -676,7 +740,7 @@
       dropdown.style.display = 'block';
     };
 
-    // Open User Profile
+    // Open Profile Page
     window.openProfile = async (uid) => {
       viewedProfileUid = uid;
       switchTab('profile');
@@ -689,8 +753,38 @@
       document.getElementById('pBio').innerText = u.bio || "No bio available";
 
       const isMe = uid === currentUser.uid;
-      const isFriend = (u.friends || []).includes(currentUser.uid);
+      const myFriends = currentUserData?.friends || [];
+      const isFriend = myFriends.includes(uid);
       const isLocked = u.isLocked && !isMe && !isFriend;
+
+      // Action Button Handler for Visiting Profiles
+      const actionBtnArea = document.getElementById('profileFriendActionButtonArea');
+      actionBtnArea.innerHTML = "";
+      if (!isMe) {
+        const hasReceivedReq = (currentUserData?.requestsReceived || []).includes(uid);
+        const hasSentReq = (u.requestsReceived || []).includes(currentUser.uid);
+
+        if (isFriend) {
+          actionBtnArea.innerHTML = `
+            <div style="display:flex; gap:8px; justify-content:center;">
+              <button class="btn-secondary btn-sm">✓ Friends</button>
+              <button class="btn-sm" onclick="openChat('${u.uid}', '${u.name}', 'single')">💬 Message</button>
+              <button class="btn-danger btn-sm" onclick="unfriendUser('${u.uid}')">Unfriend</button>
+            </div>
+          `;
+        } else if (hasReceivedReq) {
+          actionBtnArea.innerHTML = `
+            <div style="display:flex; gap:8px; justify-content:center;">
+              <button class="btn-success btn-sm" onclick="acceptRequest('${u.uid}')">Accept Request</button>
+              <button class="btn-danger btn-sm" onclick="declineRequest('${u.uid}')">Decline</button>
+            </div>
+          `;
+        } else if (hasSentReq) {
+          actionBtnArea.innerHTML = `<button class="btn-secondary btn-sm" onclick="cancelFriendRequest('${u.uid}')">Request Sent (Cancel)</button>`;
+        } else {
+          actionBtnArea.innerHTML = `<button class="btn-sm" onclick="sendFriendRequest('${u.uid}')">+ Add Friend</button>`;
+        }
+      }
 
       document.getElementById('lockedProfileBanner').classList.toggle('hidden', !isLocked);
       document.getElementById('profileDetailsArea').classList.toggle('hidden', isLocked);
@@ -713,6 +807,8 @@
         else if (u.emailPrivacy === "Friends" && isFriend) showEmail = true;
 
         document.getElementById('pEmail').innerText = showEmail ? u.email : "Hidden / Private";
+        
+        renderProfileFriendsList(u.friends || []);
         loadUserPosts(uid);
       }
 
@@ -720,7 +816,33 @@
       avatarEl.innerHTML = u.avatarUrl ? `<img src="${u.avatarUrl}">` : (u.name ? u.name[0].toUpperCase() : 'U');
     };
 
-    // Profile Dropdown Menu Handlers
+    // Render Friends Grid inside Profile View
+    function renderProfileFriendsList(friendsListUids) {
+      const grid = document.getElementById('pFriendsGrid');
+      document.getElementById('pFriendCount').innerText = friendsListUids.length;
+      grid.innerHTML = "";
+
+      if (friendsListUids.length === 0) {
+        grid.innerHTML = `<p style="color:var(--text-muted); font-size:12px;">No friends found.</p>`;
+        return;
+      }
+
+      friendsListUids.forEach(fUid => {
+        const friendObj = allUsersCache.find(u => u.uid === fUid);
+        if (friendObj) {
+          const card = document.createElement('div');
+          card.className = 'friend-card';
+          card.innerHTML = `
+            <div class="friend-card-avatar">${friendObj.avatarUrl ? `<img src="${friendObj.avatarUrl}">` : (friendObj.name ? friendObj.name[0].toUpperCase() : 'U')}</div>
+            <div style="font-size:11px; font-weight:bold; color:white; text-overflow:ellipsis; overflow:hidden; white-space:nowrap;">${friendObj.name}</div>
+          `;
+          card.onclick = () => openProfile(friendObj.uid);
+          grid.appendChild(card);
+        }
+      });
+    }
+
+    // Profile Dropdown Actions
     window.toggleProfileMenu = (event) => {
       if (event) event.stopPropagation();
       document.getElementById('profileActionMenu').classList.toggle('show');
@@ -740,18 +862,12 @@
       alert("Profile URL copied to clipboard!");
     };
 
-    window.showProfileStoryArchive = () => {
-      document.getElementById('storyArchiveSection').classList.remove('hidden');
-    };
+    window.showProfileStoryArchive = () => document.getElementById('storyArchiveSection').classList.remove('hidden');
 
     window.showActivityLog = async () => {
       const section = document.getElementById('activityLogSection');
       const list = document.getElementById('activityLogList');
       section.classList.remove('hidden');
-      list.innerHTML = "Fetching activity...";
-
-      const q = query(collection(db, "posts"), where("userId", "==", currentUser.uid));
-      const snap = await getDoc(q); // dummy fetch
       list.innerHTML = `
         <div style="padding:6px 0; border-bottom:1px solid var(--border);">✅ Created account on MWISH</div>
         <div style="padding:6px 0; border-bottom:1px solid var(--border);">📝 Updated Profile settings</div>
@@ -877,9 +993,7 @@
       }
     };
 
-    document.getElementById('closeStoryModal').onclick = () => {
-      document.getElementById('storyModal').classList.add('hidden');
-    };
+    document.getElementById('closeStoryModal').onclick = () => document.getElementById('storyModal').classList.add('hidden');
 
     // Posts Operations
     document.getElementById('postImageInput').onchange = async (e) => {
@@ -1044,9 +1158,7 @@
       alert("Post link copied to clipboard!");
     };
 
-    window.toggleReactionBox = (id) => {
-      document.getElementById(`reactBox-${id}`).classList.toggle('show');
-    };
+    window.toggleReactionBox = (id) => document.getElementById(`reactBox-${id}`).classList.toggle('show');
 
     window.setReaction = async (postId, reaction) => {
       const postRef = doc(db, "posts", postId);
@@ -1068,7 +1180,7 @@
       }
     };
 
-    // Messaging & Message Requests
+    // Messaging & Message Requests Handling
     window.switchChatSubTab = (tab) => {
       currentChatSubTab = tab;
       document.getElementById('primaryChatsTab').classList.toggle('active', tab === 'primary');
@@ -1080,7 +1192,19 @@
       const container = document.getElementById('chatUserList');
       container.innerHTML = "";
 
-      // 1. "Message Yourself / Saved Messages" Option
+      const myFriends = currentUserData?.friends || [];
+
+      // Calculate Non-Friend Message Requests count
+      const nonFriendRequests = users.filter(u => u.uid !== currentUser.uid && !myFriends.includes(u.uid));
+      document.getElementById('msgRequestCount').innerText = nonFriendRequests.length;
+
+      // Update Messages tab Badge if non-friend chats exist
+      const msgBadge = document.getElementById('messagesBadge');
+      if (msgBadge) {
+        msgBadge.innerText = nonFriendRequests.length;
+        msgBadge.classList.toggle('hidden', nonFriendRequests.length === 0);
+      }
+
       if (currentChatSubTab === 'primary') {
         const selfDiv = document.createElement('div');
         selfDiv.className = 'user-item';
@@ -1101,9 +1225,6 @@
         container.appendChild(selfDiv);
       }
 
-      const myFriends = currentUserData?.friends || [];
-
-      // Filter based on Friends vs Non-Friends (Message Requests)
       const targetUsers = users.filter(u => {
         if (u.uid === currentUser.uid) return false;
         const isFriend = myFriends.includes(u.uid);
@@ -1135,7 +1256,6 @@
         container.appendChild(div);
       });
 
-      // Group Chats in Primary Tab
       if (currentChatSubTab === 'primary') {
         onSnapshot(collection(db, "groupChats"), (snapshot) => {
           snapshot.forEach(gDoc => {
@@ -1170,9 +1290,7 @@
       document.getElementById('createGroupCard').classList.remove('hidden');
     };
 
-    document.getElementById('cancelGroupBtn').onclick = () => {
-      document.getElementById('createGroupCard').classList.add('hidden');
-    };
+    document.getElementById('cancelGroupBtn').onclick = () => document.getElementById('createGroupCard').classList.add('hidden');
 
     document.getElementById('submitCreateGroupBtn').onclick = async () => {
       const groupName = document.getElementById('groupNameInput').value.trim();
@@ -1290,37 +1408,99 @@
       openProfile(currentUser.uid);
     };
 
-    // Friends & Users Handling
-    function loadUsersAndRequests() {
-      onSnapshot(doc(db, "users", currentUser.uid), async (docSnap) => {
-        const myData = docSnap.data();
-        if (!myData) return;
+    // Friends & User Interactions
+    function renderRequestsList(requestUids) {
+      const reqList = document.getElementById('requestsList');
+      reqList.innerHTML = "";
 
-        const reqList = document.getElementById('requestsList');
-        reqList.innerHTML = "";
-        for (let reqUid of myData.requestsReceived || []) {
-          const userDoc = await getDoc(doc(db, "users", reqUid));
-          if (userDoc.exists()) {
-            const div = document.createElement('div');
-            div.className = 'user-item';
-            div.innerHTML = `<span>${userDoc.data().name}</span><button class="btn-sm" onclick="acceptRequest('${reqUid}')">Accept</button>`;
-            reqList.appendChild(div);
-          }
+      if (!requestUids || requestUids.length === 0) {
+        reqList.innerHTML = `<p style="color: var(--text-muted); font-size:13px; margin-top: 5px;">No pending friend requests</p>`;
+        return;
+      }
+
+      requestUids.forEach(rUid => {
+        const senderObj = allUsersCache.find(u => u.uid === rUid);
+        if (senderObj) {
+          const div = document.createElement('div');
+          div.className = 'user-item';
+          div.innerHTML = `
+            <div style="display:flex; align-items:center; gap:8px;" onclick="openProfile('${senderObj.uid}')">
+              <div class="avatar" style="width:32px; height:32px;">${senderObj.avatarUrl ? `<img src="${senderObj.avatarUrl}">` : (senderObj.name ? senderObj.name[0].toUpperCase() : 'U')}</div>
+              <strong>${senderObj.name}</strong>
+            </div>
+            <div style="display:flex; gap:6px;">
+              <button class="btn-success btn-sm" onclick="acceptRequest('${senderObj.uid}')">Accept</button>
+              <button class="btn-danger btn-sm" onclick="declineRequest('${senderObj.uid}')">Decline</button>
+            </div>
+          `;
+          reqList.appendChild(div);
         }
       });
+    }
 
-      onSnapshot(collection(db, "users"), (snapshot) => {
-        const usersList = document.getElementById('usersList');
-        usersList.innerHTML = "";
-        snapshot.forEach((uDoc) => {
-          const u = uDoc.data();
-          if (u.uid !== currentUser.uid) {
-            const div = document.createElement('div');
-            div.className = 'user-item';
-            div.innerHTML = `<span onclick="openProfile('${u.uid}')">${u.name}</span><button class="btn-secondary btn-sm" onclick="sendFriendRequest('${u.uid}')">Add Friend</button>`;
-            usersList.appendChild(div);
+    function renderMyFriendsList(friendUids) {
+      const friendsList = document.getElementById('myFriendsList');
+      friendsList.innerHTML = "";
+
+      if (!friendUids || friendUids.length === 0) {
+        friendsList.innerHTML = `<p style="color: var(--text-muted); font-size:13px; margin-top: 5px;">No friends added yet</p>`;
+        return;
+      }
+
+      friendUids.forEach(fUid => {
+        const friendObj = allUsersCache.find(u => u.uid === fUid);
+        if (friendObj) {
+          const div = document.createElement('div');
+          div.className = 'user-item';
+          div.innerHTML = `
+            <div style="display:flex; align-items:center; gap:8px;" onclick="openProfile('${friendObj.uid}')">
+              <div class="avatar" style="width:32px; height:32px;">${friendObj.avatarUrl ? `<img src="${friendObj.avatarUrl}">` : (friendObj.name ? friendObj.name[0].toUpperCase() : 'U')}</div>
+              <strong>${friendObj.name}</strong>
+            </div>
+            <div style="display:flex; gap:6px;">
+              <button class="btn-sm" onclick="openChat('${friendObj.uid}', '${friendObj.name}', 'single')">💬 Chat</button>
+              <button class="btn-danger btn-sm" onclick="unfriendUser('${friendObj.uid}')">Unfriend</button>
+            </div>
+          `;
+          friendsList.appendChild(div);
+        }
+      });
+    }
+
+    function renderUsersSuggestions() {
+      const usersList = document.getElementById('usersList');
+      usersList.innerHTML = "";
+
+      const myFriends = currentUserData?.friends || [];
+      const myRequests = currentUserData?.requestsReceived || [];
+
+      allUsersCache.forEach(u => {
+        if (u.uid !== currentUser.uid && !myFriends.includes(u.uid)) {
+          const hasSentReq = (u.requestsReceived || []).includes(currentUser.uid);
+          const hasReceivedReq = myRequests.includes(u.uid);
+
+          const div = document.createElement('div');
+          div.className = 'user-item';
+          
+          let btnHtml = `<button class="btn-secondary btn-sm" onclick="sendFriendRequest('${u.uid}')">+ Add Friend</button>`;
+          if (hasSentReq) {
+            btnHtml = `<button class="btn-secondary btn-sm" onclick="cancelFriendRequest('${u.uid}')">Request Sent</button>`;
+          } else if (hasReceivedReq) {
+            btnHtml = `<button class="btn-success btn-sm" onclick="acceptRequest('${u.uid}')">Accept Request</button>`;
           }
-        });
+
+          div.innerHTML = `
+            <div style="display:flex; align-items:center; gap:8px;" onclick="openProfile('${u.uid}')">
+              <div class="avatar" style="width:32px; height:32px;">${u.avatarUrl ? `<img src="${u.avatarUrl}">` : (u.name ? u.name[0].toUpperCase() : 'U')}</div>
+              <div>
+                <strong style="font-size:13px;">${u.name}</strong>
+                <div style="font-size:11px; color:var(--text-muted);">@${u.username || 'user'}</div>
+              </div>
+            </div>
+            ${btnHtml}
+          `;
+          usersList.appendChild(div);
+        }
       });
     }
 
@@ -1329,10 +1509,30 @@
       alert("Friend request sent!");
     };
 
+    window.cancelFriendRequest = async (uid) => {
+      await updateDoc(doc(db, "users", uid), { requestsReceived: arrayRemove(currentUser.uid) });
+      alert("Friend request cancelled.");
+    };
+
     window.acceptRequest = async (uid) => {
       await updateDoc(doc(db, "users", currentUser.uid), { friends: arrayUnion(uid), requestsReceived: arrayRemove(uid) });
       await updateDoc(doc(db, "users", uid), { friends: arrayUnion(currentUser.uid) });
       alert("Friend request accepted!");
+      if (viewedProfileUid) openProfile(viewedProfileUid);
+    };
+
+    window.declineRequest = async (uid) => {
+      await updateDoc(doc(db, "users", currentUser.uid), { requestsReceived: arrayRemove(uid) });
+      alert("Request declined.");
+    };
+
+    window.unfriendUser = async (uid) => {
+      if (confirm("Are you sure you want to unfriend this user?")) {
+        await updateDoc(doc(db, "users", currentUser.uid), { friends: arrayRemove(uid) });
+        await updateDoc(doc(db, "users", uid), { friends: arrayRemove(currentUser.uid) });
+        alert("Unfriended successfully.");
+        if (viewedProfileUid) openProfile(viewedProfileUid);
+      }
     };
 
     const convertBase64 = (file) => new Promise((resolve, reject) => {
