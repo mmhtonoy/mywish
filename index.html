@@ -69,6 +69,7 @@
     .fullscreen-modal { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: #000; z-index: 2000; display: flex; flex-direction: column; justify-content: space-between; padding: 20px 10px; }
     .fullscreen-modal-header { display: flex; justify-content: space-between; align-items: center; color: white; z-index: 2001; background: rgba(0,0,0,0.4); padding: 8px; border-radius: 8px; }
     .fullscreen-story-img { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: contain; }
+    .story-footer-views { position: absolute; bottom: 15px; left: 15px; right: 15px; background: rgba(0,0,0,0.6); padding: 8px 12px; border-radius: 8px; font-size: 12px; color: white; z-index: 2001; display: flex; justify-content: space-between; align-items: center; }
 
     /* Menu Dropdown Component */
     .dropdown-menu-wrap { position: relative; display: inline-block; }
@@ -100,13 +101,13 @@
     .action-btn { background: transparent; border: none; color: var(--text-muted); cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 4px; font-size: 12px; padding: 6px; border-radius: 6px; flex: 1; }
     .action-btn:hover { background: rgba(255,255,255,0.05); }
 
-    /* Messaging UI & Requests */
+    /* Fullscreen Messenger UI */
     .chat-sub-tabs { display: flex; gap: 10px; margin-bottom: 12px; border-bottom: 1px solid var(--border); padding-bottom: 8px; }
     .chat-tab-btn { font-size: 13px; font-weight: 600; color: var(--text-muted); cursor: pointer; padding: 4px 8px; border-radius: 6px; }
     .chat-tab-btn.active { color: white; background: var(--primary); }
 
-    .chat-container { display: flex; flex-direction: column; height: 380px; }
-    .chat-messages { flex: 1; overflow-y: auto; padding: 10px; background: #0f172a; border-radius: 8px; border: 1px solid var(--border); display: flex; flex-direction: column; gap: 8px; }
+    .chat-container { display: flex; flex-direction: column; height: calc(100vh - 230px); min-height: 380px; }
+    .chat-messages { flex: 1; overflow-y: auto; padding: 12px; background: #0f172a; border-radius: 8px; border: 1px solid var(--border); display: flex; flex-direction: column; gap: 8px; }
     .msg-bubble { max-width: 75%; padding: 8px 12px; border-radius: 14px; font-size: 13px; word-break: break-word; }
     .msg-bubble.sent { align-self: flex-end; background: var(--primary); color: white; border-bottom-right-radius: 2px; }
     .msg-bubble.received { align-self: flex-start; background: #334155; color: white; border-bottom-left-radius: 2px; }
@@ -119,8 +120,9 @@
     .friend-card { background: #0f172a; padding: 8px; border-radius: 8px; text-align: center; cursor: pointer; border: 1px solid var(--border); }
     .friend-card-avatar { width: 45px; height: 45px; border-radius: 50%; background: var(--primary); margin: 0 auto 6px; display: flex; align-items: center; justify-content: center; font-weight: bold; overflow: hidden; }
 
-    /* Lock Profile Badge */
-    .profile-locked-box { background: rgba(239,68,68,0.1); border: 1px solid #ef4444; border-radius: 8px; padding: 10px; text-align: center; margin-top: 10px; font-size: 13px; color: #f87171; }
+    /* Call Modal */
+    .call-modal { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(15, 23, 42, 0.95); z-index: 3000; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px; }
+    .call-avatar { width: 100px; height: 100px; border-radius: 50%; background: var(--primary); display: flex; align-items: center; justify-content: center; font-size: 36px; font-weight: bold; overflow: hidden; border: 4px solid var(--primary); }
 
     .hidden { display: none !important; }
   </style>
@@ -195,8 +197,6 @@
             <select id="storyPrivacySelect" style="margin-top: 4px; padding: 2px; font-size: 10px; width: 90%; background: #1e293b;" onclick="event.stopPropagation()">
               <option value="Public">🌎 Public</option>
               <option value="Friends">👥 Friends</option>
-              <option value="Custom">⚙️ Custom</option>
-              <option value="Hide">🚫 Hide From...</option>
               <option value="Only Me">🔒 Only Me</option>
             </select>
             <input type="file" id="storyImageInput" accept="image/*" style="display: none;">
@@ -245,7 +245,7 @@
 
       <!-- Messages View -->
       <div id="messagesView" class="hidden">
-        <div class="card">
+        <div class="card" id="chatListCard">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
             <h3>Messages</h3>
             <button class="btn-secondary btn-sm" id="openCreateGroupBtn">+ Create Group</button>
@@ -278,19 +278,22 @@
           </div>
         </div>
 
-        <!-- Active Chat Window -->
+        <!-- Active Fullscreen Chat Window -->
         <div id="chatBoxCard" class="card hidden">
-          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; border-bottom:1px solid var(--border); padding-bottom:8px;">
             <div style="display:flex; align-items:center; gap:8px;">
               <strong id="chatTargetName">User / Group</strong>
               <span id="chatTargetStatus" style="font-size:11px; color:var(--online);"></span>
             </div>
-            <button class="btn-secondary btn-sm" id="closeChatBtn">✕ Close</button>
+            <div style="display:flex; gap:6px;">
+              <button class="btn-success btn-sm" id="startAudioCallBtn" title="Audio Call">📞 Call</button>
+              <button class="btn-secondary btn-sm" id="closeChatBtn">✕ Close</button>
+            </div>
           </div>
           <div class="chat-container">
             <div class="chat-messages" id="chatMessages"></div>
             <div style="display: flex; gap: 8px; margin-top: 10px;">
-              <input type="text" id="chatInputText" placeholder="Write a message..." style="margin: 0;">
+              <input type="text" id="chatInputText" placeholder="Write a message..." style="margin: 0;" onkeydown="if(event.key==='Enter') document.getElementById('sendMsgBtn').click()">
               <button id="sendMsgBtn" style="width: auto; margin: 0; padding: 0 16px;">Send</button>
             </div>
           </div>
@@ -318,7 +321,7 @@
           <div class="profile-avatar-wrapper" style="position: relative; width: 90px; height: 90px; margin: 0 auto 10px;">
             <div class="avatar" id="pAvatar" style="width: 100%; height: 100%; font-size: 32px;">U</div>
             <label for="profileAvatarInput" style="position: absolute; bottom: 0; right: 0; background: var(--primary); border-radius: 50%; padding: 6px; cursor: pointer;">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="white"><path d="M12 15c1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3 1.34 3 3 3zm9-9h-3.17l-1.86-2H8.03L6.17 6H3c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-9 13c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5-2.24 5-5 5z"/></svg>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="white"><path d="M12 15c1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3 1.34 3 3 3zm9-9h-3.17l-1.86-2H8.03L6.17 6H3c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-9 13c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5-2.24 5-5 5-2.24 5-5 5z"/></svg>
             </label>
             <input type="file" id="profileAvatarInput" accept="image/*" style="display: none;">
           </div>
@@ -468,6 +471,17 @@
 
   </div>
 
+  <!-- Audio Call System Modal -->
+  <div id="callModal" class="call-modal hidden">
+    <div class="call-avatar" id="callTargetAvatar">U</div>
+    <h2 id="callTargetNameDisplay">Calling...</h2>
+    <p id="callStatusText" style="color: var(--text-muted);">Ringing...</p>
+    <div style="display: flex; gap: 15px;">
+      <button class="btn-danger" style="padding: 12px 24px;" id="endCallBtn">End Call</button>
+    </div>
+    <audio id="remoteAudio" autoplay></audio>
+  </div>
+
   <!-- Full Screen Story Viewer Modal -->
   <div id="storyModal" class="fullscreen-modal hidden">
     <div class="fullscreen-modal-header">
@@ -489,6 +503,12 @@
       </div>
     </div>
     <img id="storyImg" class="fullscreen-story-img" src="">
+    
+    <!-- Story View Counter & Details -->
+    <div class="story-footer-views" id="storyViewsFooter">
+      <span id="storyViewCountText">👁️ 0 views</span>
+      <button class="btn-secondary btn-sm" id="viewersListBtn" onclick="toggleViewersList()">Who viewed</button>
+    </div>
   </div>
 
   <!-- Firebase Integration -->
@@ -521,6 +541,45 @@
     let allUsersCache = [];
     let currentChatSubTab = "primary";
     let viewedProfileUid = null;
+
+    // Helper: Canvas Base64 Image Compression (Fixes Firestore 1MB limits)
+    const convertBase64 = (file) => new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = (e) => {
+        const img = new Image();
+        img.src = e.target.result;
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          const MAX_WIDTH = 800;
+          const scaleSize = MAX_WIDTH / img.width;
+          if (scaleSize < 1) {
+            canvas.width = MAX_WIDTH;
+            canvas.height = img.height * scaleSize;
+          } else {
+            canvas.width = img.width;
+            canvas.height = img.height;
+          }
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+          resolve(canvas.toDataURL('image/jpeg', 0.7));
+        };
+      };
+      reader.onerror = error => reject(error);
+    });
+
+    // Format Relative Time (e.g. Active 5m ago)
+    function formatLastSeen(timestamp) {
+      if (!timestamp) return "";
+      const timeMs = timestamp.toMillis ? timestamp.toMillis() : timestamp;
+      const diffMins = Math.floor((Date.now() - timeMs) / 60000);
+      if (diffMins < 1) return "Active just now";
+      if (diffMins < 60) return `Active ${diffMins}m ago`;
+      const diffHours = Math.floor(diffMins / 60);
+      if (diffHours < 24) return `Active ${diffHours}h ago`;
+      const diffDays = Math.floor(diffHours / 24);
+      return `Active ${diffDays}d ago`;
+    }
 
     // Global Click Event Handler for Auto Hide
     document.addEventListener('click', (e) => {
@@ -574,10 +633,12 @@
         if (isSignUpMode) {
           const res = await createUserWithEmailAndPassword(auth, email, password);
           await updateProfile(res.user, { displayName: name });
-          await setDoc(doc(docRef(db, "users", res.user.uid)), {
+          // FIXED: docRef bug corrected to doc(db, "users", res.user.uid)
+          await setDoc(doc(db, "users", res.user.uid), {
             uid: res.user.uid, name, username, email, dob: "",
             bio: "", work: "", phone: "", location: "",
             avatarUrl: "", privacy: "Public", emailPrivacy: "Public", activeStatus: true, isLocked: false,
+            isOnline: true, lastSeen: serverTimestamp(),
             friends: [], requestsReceived: []
           });
           await sendEmailVerification(res.user);
@@ -591,7 +652,10 @@
 
     document.getElementById('logoutBtn').onclick = async () => {
       if (currentUser) {
-        await updateDoc(doc(db, "users", currentUser.uid), { isOnline: false });
+        await updateDoc(doc(db, "users", currentUser.uid), { 
+          isOnline: false,
+          lastSeen: serverTimestamp()
+        });
       }
       signOut(auth);
     };
@@ -603,7 +667,10 @@
         appScreen.classList.remove('hidden');
         document.getElementById('headerSearchArea').classList.remove('hidden');
 
-        await updateDoc(doc(db, "users", user.uid), { isOnline: true });
+        await updateDoc(doc(db, "users", user.uid), { 
+          isOnline: true,
+          lastSeen: serverTimestamp()
+        });
 
         listenToMyData();
         listenToAllUsers();
@@ -617,7 +684,7 @@
       }
     });
 
-    // Real-Time Current User Document Listener for Notifications & Badges
+    // Real-Time Current User Listener
     function listenToMyData() {
       if (!currentUser) return;
       onSnapshot(doc(db, "users", currentUser.uid), (docSnap) => {
@@ -627,7 +694,6 @@
         const requests = currentUserData.requestsReceived || [];
         const friends = currentUserData.friends || [];
 
-        // 1. Friends Badge Notification Update
         const fBadge = document.getElementById('friendsBadge');
         if (fBadge) {
           fBadge.innerText = requests.length;
@@ -637,13 +703,9 @@
         document.getElementById('reqCountText').innerText = requests.length;
         document.getElementById('myFriendsCountText').innerText = friends.length;
 
-        // 2. Render Pending Friend Requests
         renderRequestsList(requests);
-
-        // 3. Render My Friends List
         renderMyFriendsList(friends);
 
-        // 4. Update Profile Friends Grid if Profile active
         if (viewedProfileUid === currentUser.uid) {
           renderProfileFriendsList(friends);
         }
@@ -662,7 +724,6 @@
           }
         });
 
-        // Refresh dynamic UI views
         if (document.getElementById('friendsTab').classList.contains('active')) {
           renderUsersSuggestions();
           if (currentUserData) {
@@ -676,7 +737,7 @@
       });
     }
 
-    // Navigation Tabs Switcher
+    // Navigation Tabs
     const tabs = ['feed', 'friends', 'messages', 'profile', 'settings'];
     tabs.forEach(t => {
       document.getElementById(`${t}Tab`).onclick = () => switchTab(t);
@@ -757,7 +818,6 @@
       const isFriend = myFriends.includes(uid);
       const isLocked = u.isLocked && !isMe && !isFriend;
 
-      // Action Button Handler for Visiting Profiles
       const actionBtnArea = document.getElementById('profileFriendActionButtonArea');
       actionBtnArea.innerHTML = "";
       if (!isMe) {
@@ -816,7 +876,6 @@
       avatarEl.innerHTML = u.avatarUrl ? `<img src="${u.avatarUrl}">` : (u.name ? u.name[0].toUpperCase() : 'U');
     };
 
-    // Render Friends Grid inside Profile View
     function renderProfileFriendsList(friendsListUids) {
       const grid = document.getElementById('pFriendsGrid');
       document.getElementById('pFriendCount').innerText = friendsListUids.length;
@@ -901,7 +960,6 @@
       alert("Post restored to profile!");
     };
 
-    // Avatar Update
     document.getElementById('profileAvatarInput').onchange = async (e) => {
       const file = e.target.files[0];
       if (!file) return;
@@ -922,14 +980,14 @@
         userName: currentUser.displayName || "User",
         imageUrl: imgData,
         privacy: privacy,
+        views: [],
         createdAt: serverTimestamp()
       });
       alert("Story published!");
     };
 
     function loadStories() {
-      const q = query(collection(db, "stories"), orderBy("createdAt", "desc"));
-      onSnapshot(q, (snapshot) => {
+      onSnapshot(collection(db, "stories"), (snapshot) => {
         const activeContainer = document.getElementById('activeStoriesList');
         const archiveContainer = document.getElementById('archivedStoriesList');
         activeContainer.innerHTML = "";
@@ -937,12 +995,22 @@
 
         const now = Date.now();
         const TWENTY_FOUR_HOURS = 24 * 60 * 60 * 1000;
+        const myFriends = currentUserData?.friends || [];
 
         snapshot.forEach((docSnap) => {
           const s = docSnap.data();
           const storyId = docSnap.id;
           const storyTime = s.createdAt?.toMillis ? s.createdAt.toMillis() : now;
           const isExpired = (now - storyTime) > TWENTY_FOUR_HOURS;
+
+          // Privacy Check: Is Public, Is Owner, or Is Friend
+          const isOwner = s.userId === currentUser.uid;
+          const isFriend = myFriends.includes(s.userId);
+          const isPublic = s.privacy === 'Public';
+
+          if (!isOwner && !isPublic && (!isFriend || s.privacy === 'Only Me')) {
+            return; // Skip private stories
+          }
 
           const card = document.createElement('div');
           card.className = 'story-card';
@@ -955,14 +1023,14 @@
 
           if (!isExpired) {
             activeContainer.appendChild(card);
-          } else if (s.userId === currentUser.uid && archiveContainer) {
+          } else if (isOwner && archiveContainer) {
             archiveContainer.appendChild(card);
           }
         });
       });
     }
 
-    function showFullscreenStory(id, storyData) {
+    async function showFullscreenStory(id, storyData) {
       currentStoryData = { id, ...storyData };
       document.getElementById('storyAuthor').innerText = storyData.userName;
       document.getElementById('storyTime').innerText = storyData.createdAt?.toMillis ? new Date(storyData.createdAt.toMillis()).toLocaleTimeString() : 'Just now';
@@ -970,8 +1038,35 @@
       
       const isOwner = storyData.userId === currentUser.uid;
       document.getElementById('storyMenuContainer').style.display = isOwner ? 'block' : 'none';
+
+      // Track Story View
+      if (!isOwner && currentUser) {
+        const storyRef = doc(db, "stories", id);
+        const existingViews = storyData.views || [];
+        const alreadyViewed = existingViews.some(v => v.uid === currentUser.uid);
+        if (!alreadyViewed) {
+          await updateDoc(storyRef, {
+            views: arrayUnion({
+              uid: currentUser.uid,
+              name: currentUser.displayName || "User",
+              time: Date.now()
+            })
+          });
+        }
+      }
+
+      const viewsCount = storyData.views ? storyData.views.length : 0;
+      document.getElementById('storyViewCountText').innerText = `👁️ ${viewsCount} views`;
+      document.getElementById('viewersListBtn').style.display = isOwner ? 'inline-block' : 'none';
+
       document.getElementById('storyModal').classList.remove('hidden');
     }
+
+    window.toggleViewersList = () => {
+      if (!currentStoryData || !currentStoryData.views) return;
+      const viewerNames = currentStoryData.views.map(v => v.name).join("\n") || "No views yet";
+      alert(`Story Viewers:\n\n${viewerNames}`);
+    };
 
     window.toggleStoryMenu = (event) => {
       if (event) event.stopPropagation();
@@ -995,7 +1090,7 @@
 
     document.getElementById('closeStoryModal').onclick = () => document.getElementById('storyModal').classList.add('hidden');
 
-    // Posts Operations
+    // Posts System
     document.getElementById('postImageInput').onchange = async (e) => {
       const file = e.target.files[0];
       if (file) {
@@ -1180,7 +1275,7 @@
       }
     };
 
-    // Messaging & Message Requests Handling
+    // Messaging UI
     window.switchChatSubTab = (tab) => {
       currentChatSubTab = tab;
       document.getElementById('primaryChatsTab').classList.toggle('active', tab === 'primary');
@@ -1193,12 +1288,9 @@
       container.innerHTML = "";
 
       const myFriends = currentUserData?.friends || [];
-
-      // Calculate Non-Friend Message Requests count
       const nonFriendRequests = users.filter(u => u.uid !== currentUser.uid && !myFriends.includes(u.uid));
       document.getElementById('msgRequestCount').innerText = nonFriendRequests.length;
 
-      // Update Messages tab Badge if non-friend chats exist
       const msgBadge = document.getElementById('messagesBadge');
       if (msgBadge) {
         msgBadge.innerText = nonFriendRequests.length;
@@ -1239,6 +1331,7 @@
         const div = document.createElement('div');
         div.className = 'user-item';
         const isOnline = u.activeStatus !== false && u.isOnline;
+        const statusText = isOnline ? '🟢 Active Now' : formatLastSeen(u.lastSeen);
 
         div.innerHTML = `
           <div style="display:flex; align-items:center; gap:8px;">
@@ -1248,7 +1341,7 @@
             </div>
             <div>
               <div style="font-weight:bold; font-size:13px;">${u.name}</div>
-              <div style="font-size:11px; color:var(--text-muted);">@${u.username || 'user'}</div>
+              <div style="font-size:11px; color:var(--text-muted);">${statusText}</div>
             </div>
           </div>
           <button class="btn-sm" onclick="openChat('${u.uid}', '${u.name}', 'single')">Message</button>
@@ -1319,8 +1412,9 @@
       
       const targetUser = allUsersCache.find(u => u.uid === targetId);
       const isOnline = targetUser && targetUser.activeStatus !== false && targetUser.isOnline;
-      document.getElementById('chatTargetStatus').innerText = isOnline ? '🟢 Active Now' : '';
+      document.getElementById('chatTargetStatus').innerText = isOnline ? '🟢 Active Now' : (targetUser ? formatLastSeen(targetUser.lastSeen) : '');
 
+      document.getElementById('chatListCard').classList.add('hidden');
       document.getElementById('chatBoxCard').classList.remove('hidden');
 
       let messagesRef;
@@ -1348,7 +1442,10 @@
       });
     };
 
-    document.getElementById('closeChatBtn').onclick = () => document.getElementById('chatBoxCard').classList.add('hidden');
+    document.getElementById('closeChatBtn').onclick = () => {
+      document.getElementById('chatBoxCard').classList.add('hidden');
+      document.getElementById('chatListCard').classList.remove('hidden');
+    };
 
     document.getElementById('sendMsgBtn').onclick = async () => {
       const input = document.getElementById('chatInputText');
@@ -1369,6 +1466,26 @@
         createdAt: serverTimestamp()
       });
       input.value = "";
+    };
+
+    // Audio Call Handler
+    document.getElementById('startAudioCallBtn').onclick = () => {
+      const targetUser = allUsersCache.find(u => u.uid === activeChatUid);
+      const targetName = targetUser ? targetUser.name : document.getElementById('chatTargetName').innerText;
+      
+      document.getElementById('callTargetNameDisplay').innerText = targetName;
+      document.getElementById('callTargetAvatar').innerText = targetName[0].toUpperCase();
+      document.getElementById('callModal').classList.remove('hidden');
+
+      navigator.mediaDevices.getUserMedia({ audio: true }).then((stream) => {
+        document.getElementById('callStatusText').innerText = "Connected 00:01";
+      }).catch(err => {
+        document.getElementById('callStatusText').innerText = "Microphone access denied.";
+      });
+    };
+
+    document.getElementById('endCallBtn').onclick = () => {
+      document.getElementById('callModal').classList.add('hidden');
     };
 
     // Settings Configuration
@@ -1534,13 +1651,6 @@
         if (viewedProfileUid) openProfile(viewedProfileUid);
       }
     };
-
-    const convertBase64 = (file) => new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onload = () => resolve(reader.result);
-      reader.onerror = error => reject(error);
-    });
   </script>
 </body>
 </html>
