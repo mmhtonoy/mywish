@@ -537,7 +537,7 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendEmailVerification, signOut, onAuthStateChanged, updateProfile } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-    import { getFirestore, doc, setDoc, getDoc, updateDoc, deleteDoc, arrayUnion, arrayRemove, collection, addDoc, query, where, orderBy, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    import { getFirestore, doc, setDoc, getDoc, updateDoc, deleteDoc, arrayUnion, arrayRemove, collection, addDoc, query, where, orderBy, limit, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
     import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
 
     const firebaseConfig = {
@@ -573,6 +573,10 @@
     let voiceRecordStartedAt = 0;
     let voiceRecordTimer = null;
     let chatStatusInterval = null;
+    let pendingChatPhotoFile = null;
+    let recordingCancelled = false;
+    let recordingStream = null;
+    const deliveryUnsubscribers = new Map();
 
     // Canvas Base64 Compression
     const convertBase64 = (file) => new Promise((resolve, reject) => {
@@ -732,6 +736,7 @@
           lastSeen: serverTimestamp()
         });
       }
+      stopDeliveryListeners();
       signOut(auth);
     };
 
@@ -752,6 +757,7 @@
         loadPosts();
         loadStories();
       } else {
+        stopDeliveryListeners();
         currentUser = null;
         authScreen.classList.remove('hidden');
         appScreen.classList.add('hidden');
@@ -784,6 +790,47 @@
         if (viewedProfileUid === currentUser.uid) {
           renderProfileFriendsList(friends);
         }
+        refreshDeliveryListeners();
+      });
+    }
+
+    // Background delivery listeners for friend chats. This makes a message become
+    // Delivered even when the receiver has not opened that particular chat yet,
+    // as long as their MWISH page is open. Seen is still set only when the chat is open.
+    function stopDeliveryListeners() {
+      deliveryUnsubscribers.forEach(unsub => { try { unsub(); } catch (_) {} });
+      deliveryUnsubscribers.clear();
+    }
+
+    function refreshDeliveryListeners() {
+      if (!currentUser) return;
+      const allowed = new Set([...(currentUserData?.friends || [])]);
+
+      deliveryUnsubscribers.forEach((unsub, uid) => {
+        if (!allowed.has(uid)) {
+          try { unsub(); } catch (_) {}
+          deliveryUnsubscribers.delete(uid);
+        }
+      });
+
+      allowed.forEach(uid => {
+        if (deliveryUnsubscribers.has(uid)) return;
+        const chatId = [currentUser.uid, uid].sort().join('_');
+        const messagesRef = collection(db, 'chats', chatId, 'messages');
+        const q = query(messagesRef, orderBy('createdAt', 'desc'), limit(20));
+        const unsub = onSnapshot(q, async snapshot => {
+          const writes = [];
+          snapshot.forEach(docSnap => {
+            const m = docSnap.data();
+            if (m.senderId !== currentUser.uid && m.status === 'sent') {
+              writes.push(updateDoc(doc(db, 'chats', chatId, 'messages', docSnap.id), {
+                status: 'delivered', deliveredAt: serverTimestamp()
+              }));
+            }
+          });
+          if (writes.length) await Promise.allSettled(writes);
+        }, () => {});
+        deliveryUnsubscribers.set(uid, unsub);
       });
     }
 
@@ -818,12 +865,12 @@
       document.getElementById(`${t}Tab`).onclick = () => switchTab(t);
     });
 
-    function switchTab(tab) {
+    function switchTab(tab, skipProfileLoad = false) {
       tabs.forEach(t => {
         document.getElementById(`${t}Tab`).classList.toggle('active', t === tab);
         document.getElementById(`${t}View`).classList.toggle('hidden', t !== tab);
       });
-      if (tab === 'profile') openProfile(currentUser.uid);
+      if (tab === 'profile' && !skipProfileLoad && currentUser) openProfile(currentUser.uid);
       if (tab === 'messages') renderChatUserList(allUsersCache);
       if (tab === 'friends') renderUsersSuggestions();
       if (tab === 'settings') loadSettingsData();
@@ -1060,7 +1107,7 @@
     // Open Profile View Page
     window.openProfile = async (uid) => {
       viewedProfileUid = uid;
-      switchTab('profile');
+      switchTab('profile', true);
       const uDoc = await getDoc(doc(db, "users", uid));
       if (!uDoc.exists()) return;
       const u = uDoc.data();
@@ -1072,7 +1119,9 @@
       const isMe = uid === currentUser.uid;
       const myFriends = currentUserData?.friends || [];
       const isFriend = myFriends.includes(uid);
-      const isLocked = u.isLocked && !isMe && !isFriend;
+      const privacy = u.privacy || 'Public';
+      const privacyBlocked = !isMe && (privacy === 'Private' || (privacy === 'Friends Only' && !isFriend));
+      const isLocked = !isMe && ((u.isLocked === true && !isFriend) || privacyBlocked);
 
       const actionBtnArea = document.getElementById('profileFriendActionButtonArea');
       actionBtnArea.innerHTML = "";
@@ -1103,6 +1152,9 @@
       }
 
       document.getElementById('lockedProfileBanner').classList.toggle('hidden', !isLocked);
+      document.getElementById('lockedProfileBanner').innerText = privacyBlocked
+        ? (privacy === 'Private' ? '🔒 This profile is private. Only the owner can view it.' : '👥 This profile is visible to friends only.')
+        : '🔒 This Profile is Locked. Only friends can view full profile details and posts.';
       document.getElementById('profileDetailsArea').classList.toggle('hidden', isLocked);
       document.getElementById('userPostsList').classList.toggle('hidden', isLocked);
 
@@ -1406,10 +1458,20 @@
       onSnapshot(q, (snapshot) => {
         const container = document.getElementById('userPostsList');
         container.innerHTML = "";
+        const profileUser = allUsersCache.find(u => u.uid === uid);
+        const myFriends = currentUserData?.friends || [];
         snapshot.forEach((docSnap) => {
           const post = docSnap.data();
-          if (!post.isTrashed) renderPostCard(post, docSnap.id, container);
+          if (post.isTrashed) return;
+          const postPrivacy = post.privacy || 'Public';
+          const canView = uid === currentUser.uid ||
+            postPrivacy === 'Public' ||
+            (postPrivacy === 'Friends' && myFriends.includes(uid));
+          if (canView) renderPostCard(post, docSnap.id, container);
         });
+        if (!container.children.length) {
+          container.innerHTML = `<p style="color:var(--text-muted);font-size:13px;margin-top:10px;">No public posts to show.</p>`;
+        }
       });
     }
 
@@ -1795,8 +1857,7 @@
         document.getElementById('startAudioCallBtn').classList.add('hidden');
       }
 
-      document.getElementById('chatImagePreview').style.display = 'none';
-      document.getElementById('chatImageInput').value = '';
+      clearPendingChatPhoto();
       document.getElementById('chatInputText').value = '';
 
       document.getElementById('chatListCard').classList.add('hidden');
@@ -1818,7 +1879,9 @@
         // Opening the chat means messages have been delivered and seen.
         if (activeChatType === 'single') {
           await markIncomingMessagesDelivered(snapshot);
-          await markIncomingMessagesSeen(snapshot);
+          if (document.visibilityState === 'visible') {
+            await markIncomingMessagesSeen(snapshot);
+          }
         } else {
           await markGroupDeliveredAndSeen(snapshot);
         }
@@ -1838,6 +1901,7 @@
         chatStatusInterval = null;
       }
       stopVoiceRecording(true);
+      clearPendingChatPhoto();
       document.getElementById('chatBoxCard').classList.add('hidden');
       document.getElementById('chatListCard').classList.remove('hidden');
     };
@@ -1863,44 +1927,74 @@
       await addDoc(messagesRef, message);
     }
 
-    document.getElementById('sendMsgBtn').onclick = async () => {
-      const input = document.getElementById('chatInputText');
-      const text = input.value.trim();
-      if (!text || !activeChatUid) return;
-
-      try {
-        await sendChatMessage({ type: 'text', text });
-        input.value = "";
-      } catch (err) {
-        alert("Message failed to send: " + err.message);
-      }
-    };
-
-    // Photo message upload -> Firebase Storage
-    document.getElementById('chatImageInput').onchange = async (e) => {
-      const file = e.target.files[0];
-      if (!file || !activeChatUid) return;
-      if (!file.type.startsWith('image/')) return alert("Please select an image.");
-      if (file.size > 8 * 1024 * 1024) return alert("Photo must be 8MB or smaller.");
-
-      const preview = document.getElementById('chatImagePreview');
-      preview.src = URL.createObjectURL(file);
-      preview.style.display = 'block';
-
+    async function sendPendingChatPhoto() {
+      const file = pendingChatPhotoFile;
+      if (!file || !activeChatUid) return false;
       try {
         const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
-        const path = `chatMedia/${currentUser.uid}/${Date.now()}_${safeName}`;
+        const path = `chatMedia/${currentUser.uid}/photo_${Date.now()}_${safeName}`;
         const fileRef = storageRef(storage, path);
         await uploadBytes(fileRef, file, { contentType: file.type });
         const url = await getDownloadURL(fileRef);
         await sendChatMessage({ type: 'image', mediaUrl: url, fileName: safeName, mimeType: file.type });
-        preview.style.display = 'none';
-        preview.src = '';
-        e.target.value = '';
+        clearPendingChatPhoto();
+        return true;
       } catch (err) {
-        alert("Photo send failed: " + err.message);
-        preview.style.display = 'none';
+        alert('Photo send failed: ' + err.message);
+        return false;
       }
+    }
+
+    function clearPendingChatPhoto() {
+      pendingChatPhotoFile = null;
+      const preview = document.getElementById('chatImagePreview');
+      if (preview.dataset.objectUrl) {
+        URL.revokeObjectURL(preview.dataset.objectUrl);
+        delete preview.dataset.objectUrl;
+      }
+      preview.style.display = 'none';
+      preview.removeAttribute('src');
+      document.getElementById('chatImageInput').value = '';
+      document.getElementById('sendMsgBtn').innerText = 'Send';
+    }
+
+    document.getElementById('sendMsgBtn').onclick = async () => {
+      if (!activeChatUid) return;
+      if (pendingChatPhotoFile) {
+        const btn = document.getElementById('sendMsgBtn');
+        btn.disabled = true;
+        btn.innerText = 'Sending…';
+        await sendPendingChatPhoto();
+        btn.disabled = false;
+        if (!pendingChatPhotoFile) btn.innerText = 'Send';
+        return;
+      }
+
+      const input = document.getElementById('chatInputText');
+      const text = input.value.trim();
+      if (!text) return;
+      try {
+        await sendChatMessage({ type: 'text', text });
+        input.value = '';
+      } catch (err) {
+        alert('Message failed to send: ' + err.message);
+      }
+    };
+
+    // Select a photo first; it is uploaded only when Send is pressed.
+    document.getElementById('chatImageInput').onchange = (e) => {
+      const file = e.target.files[0];
+      if (!file || !activeChatUid) return;
+      if (!file.type.startsWith('image/')) return alert('Please select an image.');
+      if (file.size > 8 * 1024 * 1024) return alert('Photo must be 8MB or smaller.');
+      pendingChatPhotoFile = file;
+      const preview = document.getElementById('chatImagePreview');
+      if (preview.dataset.objectUrl) URL.revokeObjectURL(preview.dataset.objectUrl);
+      const objectUrl = URL.createObjectURL(file);
+      preview.dataset.objectUrl = objectUrl;
+      preview.src = objectUrl;
+      preview.style.display = 'block';
+      document.getElementById('sendMsgBtn').innerText = 'Send Photo';
     };
 
     function formatVoiceDuration(ms) {
@@ -1918,74 +2012,101 @@
 
     async function startVoiceRecording() {
       if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === 'undefined') {
-        return alert("Voice recording is not supported by this browser.");
+        alert('Voice recording is not supported by this browser.');
+        return;
       }
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        recordedAudioChunks = [];
-        const mimeCandidates = ['audio/webm;codecs=opus', 'audio/webm', 'audio/ogg;codecs=opus'];
-        const mimeType = mimeCandidates.find(t => MediaRecorder.isTypeSupported(t)) || '';
-        mediaRecorder = new MediaRecorder(stream, mimeType ? {mimeType} : undefined);
+      if (!activeChatUid) return;
 
-        mediaRecorder.ondataavailable = e => {
+      try {
+        recordingCancelled = false;
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        recordingStream = stream;
+        recordedAudioChunks = [];
+
+        const mimeCandidates = [
+          'audio/webm;codecs=opus', 'audio/webm',
+          'audio/ogg;codecs=opus', 'audio/ogg', 'audio/mp4'
+        ];
+        const mimeType = mimeCandidates.find(t => MediaRecorder.isTypeSupported(t)) || '';
+        const recorder = mimeType ? new MediaRecorder(stream, { mimeType }) : new MediaRecorder(stream);
+        mediaRecorder = recorder;
+
+        recorder.ondataavailable = (e) => {
           if (e.data && e.data.size > 0) recordedAudioChunks.push(e.data);
         };
 
-        mediaRecorder.onstop = async () => {
+        recorder.onstop = async () => {
           const duration = Date.now() - voiceRecordStartedAt;
-          stream.getTracks().forEach(track => track.stop());
-          const blob = new Blob(recordedAudioChunks, { type: mediaRecorder.mimeType || 'audio/webm' });
+          const actualMime = recorder.mimeType || mimeType || 'audio/webm';
+          const chunks = recordedAudioChunks.slice();
+          if (recordingStream) {
+            recordingStream.getTracks().forEach(track => track.stop());
+            recordingStream = null;
+          }
 
-          if (duration < 700 || blob.size < 1000) {
+          if (recordingCancelled) {
+            resetVoiceUi();
+            return;
+          }
+
+          const blob = new Blob(chunks, { type: actualMime });
+          if (duration < 700 || blob.size < 500) {
+            alert('Voice message is too short.');
             resetVoiceUi();
             return;
           }
 
           try {
-            const ext = (mediaRecorder.mimeType || '').includes('ogg') ? 'ogg' : 'webm';
+            const ext = actualMime.includes('ogg') ? 'ogg' : actualMime.includes('mp4') ? 'm4a' : 'webm';
             const path = `chatMedia/${currentUser.uid}/voice_${Date.now()}.${ext}`;
             const fileRef = storageRef(storage, path);
-            await uploadBytes(fileRef, blob, { contentType: blob.type });
+            await uploadBytes(fileRef, blob, { contentType: actualMime });
             const url = await getDownloadURL(fileRef);
-            await sendChatMessage({
-              type: 'audio',
-              mediaUrl: url,
-              mimeType: blob.type,
-              duration
-            });
+            await sendChatMessage({ type: 'audio', mediaUrl: url, mimeType: actualMime, duration });
           } catch (err) {
-            alert("Voice message failed to send: " + err.message);
+            alert('Voice message failed to send: ' + err.message);
           } finally {
             resetVoiceUi();
           }
         };
 
-        mediaRecorder.start();
+        recorder.onerror = () => {
+          if (recordingStream) {
+            recordingStream.getTracks().forEach(track => track.stop());
+            recordingStream = null;
+          }
+          alert('Voice recording error. Please try again.');
+          resetVoiceUi();
+        };
+
+        recorder.start(250);
         isRecordingVoice = true;
         voiceRecordStartedAt = Date.now();
         document.getElementById('voiceMsgBtn').classList.add('voice-recording');
-        document.getElementById('voiceMsgBtn').innerText = '⏹️';
+        document.getElementById('voiceMsgBtn').innerText = '⏹️ Stop';
         document.getElementById('voiceRecordTime').classList.remove('hidden');
         updateVoiceTimer();
-        voiceRecordTimer = setInterval(updateVoiceTimer, 500);
+        voiceRecordTimer = setInterval(updateVoiceTimer, 250);
       } catch (err) {
-        alert("Microphone permission is required: " + err.message);
+        if (recordingStream) {
+          recordingStream.getTracks().forEach(track => track.stop());
+          recordingStream = null;
+        }
+        alert('Microphone permission is required: ' + err.message);
       }
     }
 
     function stopVoiceRecording(cancelOnly = false) {
-      if (!mediaRecorder || !isRecordingVoice) {
+      if (!mediaRecorder || mediaRecorder.state === 'inactive') {
+        if (recordingStream) {
+          recordingStream.getTracks().forEach(track => track.stop());
+          recordingStream = null;
+        }
         resetVoiceUi();
         return;
       }
-      if (cancelOnly) {
-        mediaRecorder.onstop = () => {
-          if (mediaRecorder.stream) mediaRecorder.stream.getTracks().forEach(t => t.stop());
-          resetVoiceUi();
-        };
-      }
+      recordingCancelled = cancelOnly;
       mediaRecorder.stop();
-      isRecordingVoice = false;
     }
 
     function resetVoiceUi() {
@@ -1999,6 +2120,7 @@
       document.getElementById('voiceRecordTime').innerText = '00:00';
       mediaRecorder = null;
       recordedAudioChunks = [];
+      recordingCancelled = false;
     }
 
     document.getElementById('voiceMsgBtn').onclick = () => {
