@@ -57,10 +57,31 @@
     .tab-badge { position: absolute; top: 4px; right: 18px; background: #ef4444; color: white; font-size: 10px; font-weight: bold; padding: 2px 6px; border-radius: 10px; min-width: 16px; text-align: center; }
 
     /* Stories Bar */
-    .stories-container { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 8px; margin-bottom: 15px; }
+    .stories-container { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 8px; margin-bottom: 15px; scroll-snap-type:x mandatory; }
+    .story-stack-card { min-width:105px; width:105px; height:160px; border-radius:12px; position:relative; overflow:hidden; cursor:pointer; flex-shrink:0; scroll-snap-align:start; background:#0f172a; border:1px solid var(--border); }
+    .story-stack-card .story-slide { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; display:none; }
+    .story-stack-card .story-slide.active { display:block; }
+    .story-stack-card .story-slide-shade { position:absolute; inset:0; background:linear-gradient(to bottom,rgba(0,0,0,.08),rgba(0,0,0,.78)); pointer-events:none; }
+    .story-stack-card .story-stack-dots { position:absolute; top:5px; left:5px; right:5px; display:flex; gap:2px; z-index:5; }
+    .story-stack-card .story-stack-dots span { height:2px; flex:1; background:rgba(255,255,255,.45); border-radius:3px; }
+    .story-stack-card .story-stack-dots span.active { background:#fff; }
+    .story-stack-card .story-stack-name { position:absolute; left:7px; right:7px; bottom:8px; z-index:6; color:#fff; font-size:11px; font-weight:700; text-shadow:0 1px 4px #000; }
+    .story-stack-card .story-stack-avatar { width:30px; height:30px; border-radius:50%; overflow:hidden; border:2px solid #fff; display:block; margin-bottom:4px; background:var(--primary); }
+    .story-stack-card .story-stack-avatar img { width:100%; height:100%; object-fit:cover; }
+    .story-stack-card .story-stack-count { position:absolute; bottom:6px; right:6px; z-index:7; background:rgba(0,0,0,.58); color:#fff; border-radius:8px; padding:2px 5px; font-size:8px; }
+    .story-card.story-create-card { background-size:cover; background-position:center; position:relative; }
+    .story-create-card::before { content:""; position:absolute; inset:0; background:linear-gradient(to bottom,rgba(0,0,0,.05),rgba(0,0,0,.78)); z-index:0; }
+    .story-create-content { position:relative; z-index:2; height:100%; padding:8px; display:flex; flex-direction:column; align-items:center; text-align:center; }
+    .story-create-avatar { width:52px; height:52px; border-radius:50%; overflow:hidden; border:3px solid #fff; background:var(--primary); display:flex; align-items:center; justify-content:center; font-weight:800; margin:8px 0 auto; }
+    .story-create-avatar img { width:100%; height:100%; object-fit:cover; }
+    .story-countdown { position:absolute; left:6px; right:6px; bottom:6px; z-index:3; background:rgba(0,0,0,.58); border-radius:10px; padding:3px 6px; font-size:9px; text-align:center; color:#fff; }
+    .story-viewer-countdown { position:absolute; top:40px; left:15px; right:15px; z-index:2001; font-size:11px; color:#fff; background:rgba(0,0,0,.42); padding:5px 8px; border-radius:8px; text-align:center; }
+    .story-owner-avatar { width:30px; height:30px; border-radius:50%; overflow:hidden; border:2px solid #fff; background:var(--primary); display:inline-flex; vertical-align:middle; align-items:center; justify-content:center; margin-right:6px; }
+    .story-owner-avatar img { width:100%; height:100%; object-fit:cover; }
+    .unread-message-count { min-width:18px; height:18px; border-radius:10px; background:#1877f2; color:#fff; font-size:10px; display:inline-flex; align-items:center; justify-content:center; padding:0 5px; margin-left:6px; }
     .story-card { min-width: 105px; height: 160px; border-radius: 12px; background: #0f172a; border: 1px solid var(--border); position: relative; overflow: hidden; cursor: pointer; flex-shrink: 0; display: flex; flex-direction: column; justify-content: flex-end; padding: 8px; }
     .story-card img.story-bg { position: absolute; top:0; left:0; width:100%; height:100%; object-fit: cover; opacity: 0.85; }
-    .story-add-btn { background: var(--card-bg); border: 2px stroke var(--primary); display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; font-size: 11px; font-weight: 600; }
+    .story-add-btn { background: var(--card-bg); border: 2px solid var(--primary); display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; font-size: 11px; font-weight: 600; }
     .story-add-icon { width: 36px; height: 36px; border-radius: 50%; background: var(--primary); display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: bold; margin-bottom: 6px; box-shadow: 0 2px 8px rgba(24,119,242,0.4); }
     .story-user-name { position: relative; z-index: 2; font-size: 11px; font-weight: bold; text-shadow: 0 1px 3px rgba(0,0,0,0.9); }
     .story-privacy-badge { position: absolute; top: 6px; right: 6px; background: rgba(0,0,0,0.6); padding: 2px 6px; border-radius: 10px; font-size: 9px; }
@@ -148,7 +169,109 @@
     .call-avatar { width: 110px; height: 110px; border-radius: 50%; background: var(--primary); display: flex; align-items: center; justify-content: center; font-size: 40px; font-weight: bold; overflow: hidden; border: 4px solid var(--primary); box-shadow: 0 0 25px rgba(24,119,242,0.5); }
 
     .hidden { display: none !important; }
-  </style>
+  
+    /* MWISH v4 profile/group/reaction enhancements */
+    .profile-avatar-view { cursor:zoom-in; cursor: zoom-in; }
+    .post-author-avatar { width: 38px; height: 38px; border-radius: 50%; overflow:hidden; background:var(--primary); display:flex; align-items:center; justify-content:center; font-weight:700; flex-shrink:0; position:relative; }
+    .post-author-avatar img { width:100%; height:100%; object-fit:cover; }
+    .reaction-summary-btn { border:0; background:transparent; color:var(--text-muted); padding:4px 7px; width:auto; margin:0; font-weight:600; }
+    .reaction-list-row { display:flex; align-items:center; gap:10px; padding:9px 0; border-bottom:1px solid var(--border); }
+    .reaction-list-avatar { width:34px; height:34px; border-radius:50%; overflow:hidden; background:var(--primary); display:flex; align-items:center; justify-content:center; font-weight:700; flex-shrink:0; }
+    .reaction-list-avatar img { width:100%; height:100%; object-fit:cover; }
+    .comment-row { display:flex; gap:7px; margin:7px 0; align-items:flex-start; }
+    .comment-avatar { width:30px; height:30px; border-radius:50%; overflow:hidden; background:var(--primary); display:flex; align-items:center; justify-content:center; flex-shrink:0; font-weight:700; }
+    .comment-avatar img { width:100%; height:100%; object-fit:cover; }
+    .comment-bubble { background:#0f172a; border-radius:12px; padding:7px 9px; flex:1; min-width:0; }
+    .comment-actions { display:flex; gap:9px; font-size:10px; color:var(--text-muted); margin-top:3px; }
+    .comment-action { cursor:pointer; }
+    .comment-action:hover { color:var(--text); }
+    .comment-reply-list { margin-left:35px; }
+    .comment-reply-input { display:none; margin:4px 0 5px 35px; width:calc(100% - 35px); }
+    .comment-reaction-picker { display:none; position:absolute; background:var(--card-bg); border:1px solid var(--border); border-radius:18px; padding:5px 8px; gap:5px; z-index:100; }
+    .comment-reaction-picker.show { display:flex; }
+    .comment-wrap { position:relative; }
+    .msg-reaction-bar { display:flex; gap:4px; margin-top:3px; }
+    .msg-react-btn { border:1px solid var(--border); background:rgba(15,23,42,.65); border-radius:12px; padding:2px 6px; cursor:pointer; font-size:11px; }
+    .msg-react-btn.active { border-color:var(--primary); }
+    .msg-reaction-picker { display:none; gap:5px; position:absolute; bottom:100%; right:0; background:var(--card-bg); border:1px solid var(--border); border-radius:18px; padding:5px 8px; z-index:120; }
+    .msg-reaction-picker.show { display:flex; }
+    .msg-bubble { position:relative; }
+    .msg-react-wrap { position:relative; display:inline-block; margin-top:2px; }
+
+    .group-card-actions { display:flex; gap:5px; flex-wrap:wrap; justify-content:flex-end; }
+    .group-admin-badge { font-size:10px; padding:2px 6px; border-radius:8px; background:rgba(34,197,94,.15); color:#4ade80; }
+    .chat-search-suggestions { position:relative; }
+    .chat-search-dropdown { position:absolute; left:0; right:0; top:100%; background:var(--card-bg); border:1px solid var(--border); border-radius:8px; z-index:300; max-height:260px; overflow-y:auto; display:none; box-shadow:0 8px 20px rgba(0,0,0,.45); }
+    .chat-search-dropdown.show { display:block; }
+
+    /* MWISH v5 Notifications */
+    .notification-list { display:flex; flex-direction:column; gap:0; }
+    .notification-row { display:flex; align-items:center; gap:10px; padding:12px 8px; border-bottom:1px solid var(--border); cursor:pointer; border-radius:8px; }
+    .notification-row:hover { background:rgba(255,255,255,.04); }
+    .notification-row.unread { background:rgba(24,119,242,.10); }
+    .notification-avatar { width:42px; height:42px; border-radius:50%; overflow:hidden; background:var(--primary); display:flex; align-items:center; justify-content:center; font-weight:700; flex-shrink:0; }
+    .notification-avatar img { width:100%; height:100%; object-fit:cover; }
+    .notification-text { flex:1; min-width:0; font-size:13px; line-height:1.35; }
+    .notification-time { font-size:10px; color:var(--text-muted); margin-top:3px; }
+    .notification-dot { width:9px; height:9px; border-radius:50%; background:#1877f2; flex-shrink:0; }
+    .notification-empty { text-align:center; color:var(--text-muted); padding:35px 10px; }
+    .notification-toolbar { display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:10px; }
+    .notification-toolbar button { width:auto; margin:0; }
+
+#storyModal .story-modal-content,#storyModal .story-viewer,#storyModal .fullscreen-story-container{
+width:100vw!important;height:100vh!important;max-width:none!important;max-height:none!important;
+border-radius:0!important;background:#000!important}
+#storyModal #storyImg,.fullscreen-story-img{
+width:100vw!important;height:100vh!important;max-width:none!important;max-height:none!important;
+object-fit:contain!important;background:#000!important}
+.post-time{font-size:10px;color:var(--text-muted);margin-top:2px}
+
+    .comment-compose-row{display:flex;gap:6px;align-items:center;margin-top:7px}
+    .comment-compose-row input{flex:1;min-width:0}
+    .comment-send-btn{width:auto!important;margin:0!important;padding:9px 14px!important;border-radius:9px!important;font-weight:700;cursor:pointer}
+    .comment-reply-input{display:none!important}
+    .comment-reply-input.show{display:block!important}
+    .msg-reaction-picker{left:50%!important;right:auto!important;bottom:calc(100% + 6px)!important;transform:translateX(-50%)!important;white-space:nowrap!important;min-width:max-content!important}
+
+    .reply-compose-row{display:none;gap:6px;align-items:center;margin:4px 0 5px 35px}
+    .reply-compose-row.show{display:flex}
+    .reply-compose-row .comment-reply-input{display:block!important;flex:1;width:auto;margin:0}
+.msg-react-wrap{position:relative;display:inline-block;margin-top:2px;vertical-align:middle}
+/* V12 */
+.msg-reaction-picker{
+  left:auto!important;
+  right:-42px!important;
+  transform:none!important;
+  bottom:calc(100% + 7px)!important;
+  white-space:nowrap!important;
+  min-width:max-content!important;
+  z-index:500!important;
+}
+.comment-time{
+  font-size:9px;
+  color:var(--text-muted);
+  margin-top:3px;
+  cursor:help;
+}
+.comment-menu-wrap{position:relative;display:inline-block;margin-left:4px}
+.comment-menu-btn{
+  border:0;background:transparent;color:var(--text-muted);
+  cursor:pointer;font-size:14px;padding:0 3px;line-height:1;
+}
+.comment-menu{
+  display:none;position:absolute;right:0;top:18px;z-index:600;
+  min-width:105px;background:var(--card-bg);border:1px solid var(--border);
+  border-radius:8px;box-shadow:0 8px 25px rgba(0,0,0,.35);overflow:hidden;
+}
+.comment-menu.show{display:block}
+.comment-menu div{padding:8px 10px;font-size:11px;cursor:pointer}
+.comment-menu div:hover{background:rgba(255,255,255,.07)}
+.post-privacy-time{
+  display:flex;align-items:center;gap:7px;font-size:11px;color:var(--text-muted);
+}
+.post-privacy-time .post-time{margin:0;font-size:10px}
+
+</style>
 </head>
 <body>
 
@@ -178,7 +301,13 @@
       <input type="text" id="authName" placeholder="Full Name" class="hidden">
       <input type="text" id="authUsername" placeholder="Username" class="hidden">
       <input type="email" id="authEmail" placeholder="Email Address">
-      <input type="password" id="authPassword" placeholder="Password">
+      <div class="auth-password-wrap" style="position:relative;display:flex;align-items:center;">
+        <input type="password" id="authPassword" placeholder="Password" style="padding-right:46px;width:100%;">
+        <button type="button" id="toggleAuthPassword" aria-label="Show password" style="position:absolute;right:8px;background:none;border:0;color:var(--text-muted);font-size:18px;cursor:pointer;padding:6px;width:auto;">👁️</button>
+      </div>
+      <div id="forgotPasswordRow" style="text-align:right;margin-top:-6px;margin-bottom:10px;">
+        <a href="#" id="forgotPasswordLink" style="font-size:12px;color:var(--primary);">Forgot password?</a>
+      </div>
       <button id="authSubmitBtn">Login</button>
       <p style="text-align: center; margin-top: 15px; font-size: 14px; color: var(--text-muted);">
         <span id="toggleAuthText">Don't have an account?</span> 
@@ -202,6 +331,10 @@
           <svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 9h12v2H6V9zm8 5H6v-2h8v2zm4-6H6V6h12v2z"/></svg>
           <span id="messagesBadge" class="tab-badge hidden">0</span>
         </div>
+        <div class="tab-btn" id="notificationsTab" title="Notifications">
+          <svg viewBox="0 0 24 24"><path d="M12 22a2.5 2.5 0 0 0 2.45-2h-4.9A2.5 2.5 0 0 0 12 22zm7-6v-5a7 7 0 0 0-5.5-6.84V3a1.5 1.5 0 0 0-3 0v1.16A7 7 0 0 0 5 11v5l-2 2v1h18v-1l-2-2z"/></svg>
+          <span id="notificationsBadge" class="tab-badge hidden">0</span>
+        </div>
         <div class="tab-btn" id="profileTab" title="Profile">
           <svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
         </div>
@@ -214,15 +347,18 @@
       <div id="feedView">
         <!-- Stories Section -->
         <div class="stories-container" id="storiesBar">
-          <label for="storyImageInput" class="story-card story-add-btn">
-            <div class="story-add-icon">+</div>
-            <span>Create Story</span>
-            <select id="storyPrivacySelect" style="margin-top: 4px; padding: 2px; font-size: 10px; width: 90%; background: #1e293b;" onclick="event.stopPropagation()">
-              <option value="Public">🌎 Public</option>
-              <option value="Friends">👥 Friends</option>
-              <option value="Only Me">🔒 Only Me</option>
-            </select>
-            <input type="file" id="storyImageInput" accept="image/*" style="display: none;">
+          <label for="storyImageInput" id="createStoryCard" class="story-card story-add-btn story-create-card">
+            <div class="story-create-content">
+              <div id="createStoryAvatar" class="story-create-avatar">U</div>
+              <div class="story-add-icon">+</div>
+              <strong>Create Story</strong>
+              <select id="storyPrivacySelect" style="margin-top:4px;padding:2px;font-size:10px;width:90%;background:#1e293b;color:white;border:1px solid var(--border);border-radius:6px;" onclick="event.preventDefault(); event.stopPropagation()">
+                <option value="Public">🌎 Public</option>
+                <option value="Friends">👥 Friends</option>
+                <option value="Only Me">🔒 Only Me</option>
+              </select>
+              <input type="file" id="storyImageInput" accept="image/*" style="display:none;">
+            </div>
           </label>
 
           <div id="activeStoriesList" style="display: flex; gap: 10px;"></div>
@@ -281,9 +417,10 @@
           </div>
 
           <!-- Message Search Bar -->
-          <div id="chatSearchBoxArea" style="display: flex; gap: 6px; margin-bottom: 10px;">
-            <input type="text" id="chatSearchInput" placeholder="Search conversations..." style="margin:0;">
+          <div id="chatSearchBoxArea" class="chat-search-suggestions" style="display: flex; gap: 6px; margin-bottom: 10px;">
+            <input type="text" id="chatSearchInput" placeholder="Search people by name or username..." style="margin:0;">
             <button id="execChatSearchBtn" class="btn-secondary btn-sm" style="padding: 0 12px; font-size:14px;">🔍</button>
+            <div id="chatSearchSuggestions" class="chat-search-dropdown"></div>
           </div>
 
           <div id="chatUserList"></div>
@@ -301,6 +438,16 @@
           </div>
         </div>
 
+        <div id="groupAdminCard" class="card hidden">
+          <div class="section-title"><span>👥 Group Admin Panel</span><button class="btn-secondary btn-sm" id="closeGroupPanelBtn">✕</button></div>
+          <input id="groupAdminNameInput" placeholder="Group name">
+          <div id="groupAdminMembersList"></div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;">
+            <button class="btn-sm" id="saveGroupNameBtn">Save Group Name</button>
+            <button class="btn-danger btn-sm" id="deleteGroupBtn">Delete Group</button>
+          </div>
+        </div>
+
         <!-- Active Fullscreen Chat Window -->
         <div id="chatBoxCard" class="card hidden">
           <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; border-bottom:1px solid var(--border); padding-bottom:8px;">
@@ -310,6 +457,7 @@
             </div>
             <div style="display:flex; gap:6px;">
               <button class="btn-success btn-sm" id="startAudioCallBtn" title="Audio Call">📞 Call</button>
+              <button class="btn-secondary btn-sm hidden" id="groupPanelBtn">⚙ Group</button><button class="btn-danger btn-sm hidden" id="leaveGroupChatBtn">Leave</button>
               <button class="btn-secondary btn-sm" id="closeChatBtn">✕ Close</button>
             </div>
           </div>
@@ -326,6 +474,17 @@
             </div>
             <div id="chatComposerStatus" class="chat-composer-status"></div>
           </div>
+        </div>
+      </div>
+
+      <!-- Notifications View -->
+      <div id="notificationsView" class="hidden">
+        <div class="card">
+          <div class="notification-toolbar">
+            <h3>Notifications</h3>
+            <button class="btn-secondary btn-sm" id="markAllNotificationsReadBtn">Mark all as read</button>
+          </div>
+          <div id="notificationList" class="notification-list"></div>
         </div>
       </div>
 
@@ -348,8 +507,8 @@
           </div>
 
           <div class="profile-avatar-wrapper" style="position: relative; width: 90px; height: 90px; margin: 0 auto 10px;">
-            <div class="avatar" id="pAvatar" style="width: 100%; height: 100%; font-size: 32px;">U</div>
-            <label for="profileAvatarInput" style="position: absolute; bottom: 0; right: 0; background: var(--primary); border-radius: 50%; padding: 6px; cursor: pointer;">
+            <div class="avatar profile-avatar-view" id="pAvatar" style="width: 100%; height: 100%; font-size: 32px;" title="View profile picture" role="button" tabindex="0" onclick="viewProfilePhoto()" onkeydown="if(event.key==='Enter' || event.key===' ') viewProfilePhoto()"></div>
+            <label id="profileAvatarUploadLabel" for="profileAvatarInput" title="Change profile picture" style="position: absolute; bottom: 0; right: 0; background: var(--primary); border-radius: 50%; padding: 7px; cursor: pointer; border:2px solid #fff;">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="white"><path d="M12 15c1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3 1.34 3 3 3zm9-9h-3.17l-1.86-2H8.03L6.17 6H3c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-9 13c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5-2.24 5-5 5-2.24 5-5 5z"/></svg>
             </label>
             <input type="file" id="profileAvatarInput" accept="image/*" style="display: none;">
@@ -541,11 +700,26 @@
     </div>
   </div>
 
+  <!-- Profile Photo / Reaction Viewer Modals -->
+  <div id="imageViewerModal" class="fullscreen-modal hidden" style="background:rgba(0,0,0,.92);z-index:3000;justify-content:center;align-items:center;">
+    <button id="closeImageViewerBtn" class="btn-secondary btn-sm" style="position:absolute;top:18px;right:18px;width:auto;z-index:3001;font-size:20px;">✕</button>
+    <img id="imageViewerImg" src="" style="max-width:94vw;max-height:88vh;object-fit:contain;border-radius:12px;">
+  </div>
+
+  <div id="reactionViewerModal" class="fullscreen-modal hidden" style="background:rgba(15,23,42,.98);z-index:3000;padding:20px;justify-content:flex-start;">
+    <div style="width:min(520px,100%);margin:auto;background:var(--card-bg);border:1px solid var(--border);border-radius:14px;padding:16px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);padding-bottom:10px;">
+        <strong>People who reacted</strong><button id="closeReactionViewerBtn" class="btn-secondary btn-sm">✕</button>
+      </div>
+      <div id="reactionViewerList" style="margin-top:8px;max-height:70vh;overflow:auto;"></div>
+    </div>
+  </div>
+
   <!-- Firebase Integration -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendEmailVerification, signOut, onAuthStateChanged, updateProfile } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-    import { getFirestore, doc, setDoc, getDoc, updateDoc, deleteDoc, arrayUnion, arrayRemove, collection, addDoc, query, where, orderBy, limit, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendEmailVerification, sendPasswordResetEmail, signOut, onAuthStateChanged, updateProfile } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+    import { getFirestore, doc, setDoc, getDoc, updateDoc, deleteDoc, arrayUnion, arrayRemove, collection, addDoc, query, where, orderBy, limit, onSnapshot, serverTimestamp, increment } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
     import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
 
     const firebaseConfig = {
@@ -570,6 +744,7 @@
     let activeChatType = "single"; 
     let chatUnsubscribe = null;
     let currentStoryData = null;
+    let openCommentSections = new Set();
     let allUsersCache = [];
     let currentChatSubTab = "primary";
     let viewedProfileUid = null;
@@ -585,6 +760,14 @@
     let recordingCancelled = false;
     let recordingStream = null;
     const deliveryUnsubscribers = new Map();
+    let allUsersGroupUnsub = null;
+    let activeGroupData = null;
+    let notificationUnsubscribe = null;
+    let messageUnreadUnsubscribe = null;
+    let messageUnreadByUser = {};
+    let messageUnreadByGroup = {};
+    let storyCountdownInterval = null;
+    let storyListCountdownInterval = null;
 
     // Canvas Base64 Compression
     const convertBase64 = (file) => new Promise((resolve, reject) => {
@@ -626,6 +809,78 @@
       return `Active ${diffDays}d ago`;
     }
 
+    function totalUnreadMessages() {
+      const a = Object.values(messageUnreadByUser || {}).reduce((s,n) => s + (Number(n)||0), 0);
+      const b = Object.values(messageUnreadByGroup || {}).reduce((s,n) => s + (Number(n)||0), 0);
+      return a + b;
+    }
+    function updateMessageBadge() {
+      const badge = document.getElementById('messagesBadge');
+      if (!badge) return;
+      const total = totalUnreadMessages();
+      badge.innerText = total > 99 ? '99+' : String(total);
+      badge.classList.toggle('hidden', total === 0);
+    }
+    function getUnreadFromMap(map, key) { return Number((map || {})[key] || 0); }
+    async function clearUnreadForSingle(uid) {
+      if (!currentUser || !uid) return;
+      try { await updateDoc(doc(db,'users',currentUser.uid), {[`unreadMessages.${uid}`]:0}); } catch (_) {}
+    }
+    async function clearUnreadForGroup(groupId) {
+      if (!currentUser || !groupId) return;
+      try { await updateDoc(doc(db,'users',currentUser.uid), {[`unreadGroupMessages.${groupId}`]:0}); } catch (_) {}
+    }
+    function listenToMessageUnread() {
+      if (!currentUser) return;
+      if (messageUnreadUnsubscribe) { try { messageUnreadUnsubscribe(); } catch (_) {} }
+      messageUnreadUnsubscribe = onSnapshot(doc(db,'users',currentUser.uid), snap => {
+        const d = snap.data() || {};
+        messageUnreadByUser = d.unreadMessages || {};
+        messageUnreadByGroup = d.unreadGroupMessages || {};
+        updateMessageBadge();
+        if (document.getElementById('messagesTab')?.classList.contains('active')) renderChatUserList(allUsersCache);
+      }, err => console.warn('Unread message listener:', err));
+    }
+    function timestampMs(value) {
+      if (!value) return 0;
+      if (value.toMillis) return value.toMillis();
+      if (typeof value === 'number') return value;
+      const p = Date.parse(value);
+      return isNaN(p) ? 0 : p;
+    }
+    function storyRemainingText(createdAtMs) {
+      const left = Math.max(0, 24*60*60*1000 - (Date.now() - createdAtMs));
+      const sec = Math.floor(left/1000);
+      const h = Math.floor(sec/3600), m = Math.floor((sec%3600)/60), s = sec%60;
+      if (h > 0) return `${h}h ${m}m left`;
+      if (m > 0) return `${m}m ${s}s left`;
+      return `${s}s left`;
+    }
+    function refreshCreateStoryCard() {
+      const card = document.getElementById('createStoryCard');
+      const avatar = document.getElementById('createStoryAvatar');
+      if (!card || !avatar) return;
+      const url = currentUserData?.avatarUrl || '';
+      const name = currentUserData?.name || currentUser?.displayName || 'User';
+      card.style.backgroundImage = url ? `url("${url}")` : 'none';
+      avatar.innerHTML = url ? `<img src="${escapeHtml(url)}" alt="Profile">` : escapeHtml(name[0]?.toUpperCase() || 'U');
+    }
+    function startStoryCountdownTicker() {
+      if (storyListCountdownInterval) clearInterval(storyListCountdownInterval);
+      storyListCountdownInterval = setInterval(() => {
+        document.querySelectorAll('[data-story-created]').forEach(el => {
+          const ms = Number(el.getAttribute('data-story-created'));
+          if (!ms) return;
+          if (Date.now() - ms >= 24*60*60*1000) {
+            const card = el.closest('.story-card');
+            if (card) card.remove();
+          } else {
+            el.textContent = storyRemainingText(ms);
+          }
+        });
+      }, 1000);
+    }
+
     // Window Visibility & Page Unload Listeners for Active Status
     document.addEventListener('visibilitychange', () => {
       if (currentUser) {
@@ -659,6 +914,7 @@
     // Refresh visible "Active X ago" labels every 30 seconds.
     setInterval(() => {
       if (!currentUser) return;
+      refreshCreateStoryCard();
       if (document.getElementById('messagesTab').classList.contains('active')) {
         renderChatUserList(allUsersCache);
         if (activeChatUid && activeChatType === 'single') updateChatTargetStatus();
@@ -711,6 +967,25 @@
       document.getElementById('authUsername').classList.toggle('hidden', !isSignUpMode);
     };
 
+    document.getElementById('toggleAuthPassword').onclick = () => {
+      const input = document.getElementById('authPassword');
+      const btn = document.getElementById('toggleAuthPassword');
+      const visible = input.type === 'text';
+      input.type = visible ? 'password' : 'text';
+      btn.innerText = visible ? '👁️' : '🙈';
+      btn.setAttribute('aria-label', visible ? 'Show password' : 'Hide password');
+    };
+
+    document.getElementById('forgotPasswordLink').onclick = async (e) => {
+      e.preventDefault();
+      const email = document.getElementById('authEmail').value.trim();
+      if (!email) return alert('Please enter your email address first.');
+      try {
+        await sendPasswordResetEmail(auth, email);
+        alert('Password reset email sent. Check your email inbox/spam folder.');
+      } catch (err) { alert(err.message); }
+    };
+
     document.getElementById('authSubmitBtn').onclick = async () => {
       const email = document.getElementById('authEmail').value.trim();
       const password = document.getElementById('authPassword').value;
@@ -726,13 +1001,20 @@
             bio: "", work: "", phone: "", location: "",
             avatarUrl: "", privacy: "Public", emailPrivacy: "Public", activeStatus: true, isLocked: false,
             isOnline: true, lastSeen: serverTimestamp(),
-            friends: [], requestsReceived: []
+            friends: [], requestsReceived: [], unreadMessages: {}, unreadGroupMessages: {}
           });
           await sendEmailVerification(res.user);
           await signOut(auth);
-          alert("Verification email sent! Verify to login.");
+          alert("Verification email/link sent! Open the email, verify your account, then login.");
         } else {
-          await signInWithEmailAndPassword(auth, email, password);
+          const res = await signInWithEmailAndPassword(auth, email, password);
+          await res.user.reload();
+          if (!res.user.emailVerified) {
+            await sendEmailVerification(res.user);
+            await signOut(auth);
+            alert('Your email is not verified yet. A new verification email/link was sent. Open it, then login again.');
+            return;
+          }
         }
       } catch (err) { alert(err.message); }
     };
@@ -762,10 +1044,14 @@
 
         listenToMyData();
         listenToAllUsers();
+        listenToNotifications();
+        listenToMessageUnread();
         loadPosts();
         loadStories();
       } else {
         stopDeliveryListeners();
+        if (notificationUnsubscribe) { try { notificationUnsubscribe(); } catch (_) {} notificationUnsubscribe = null; }
+        if (messageUnreadUnsubscribe) { try { messageUnreadUnsubscribe(); } catch (_) {} messageUnreadUnsubscribe = null; }
         currentUser = null;
         authScreen.classList.remove('hidden');
         appScreen.classList.add('hidden');
@@ -779,6 +1065,7 @@
       onSnapshot(doc(db, "users", currentUser.uid), (docSnap) => {
         if (!docSnap.exists()) return;
         currentUserData = docSnap.data();
+        refreshCreateStoryCard();
 
         const requests = currentUserData.requestsReceived || [];
         const friends = currentUserData.friends || [];
@@ -868,7 +1155,7 @@
     }
 
     // Navigation Tabs Navigation
-    const tabs = ['feed', 'friends', 'messages', 'profile', 'settings'];
+    const tabs = ['feed', 'friends', 'messages', 'notifications', 'profile', 'settings'];
     tabs.forEach(t => {
       document.getElementById(`${t}Tab`).onclick = () => switchTab(t);
     });
@@ -880,15 +1167,119 @@
       });
       if (tab === 'profile' && !skipProfileLoad && currentUser) openProfile(currentUser.uid);
       if (tab === 'messages') renderChatUserList(allUsersCache);
+      if (tab === 'notifications') { renderNotifications(); }
       if (tab === 'friends') renderUsersSuggestions();
       if (tab === 'settings') loadSettingsData();
     }
+
+    // ===== MWISH v5 Notification System =====
+    async function createNotification(targetUid, data) {
+      if (!currentUser || !targetUid || targetUid === currentUser.uid) return;
+      try {
+        await addDoc(collection(db, 'users', targetUid, 'notifications'), {
+          ...data,
+          actorId: currentUser.uid,
+          actorName: currentUser.displayName || currentUserData?.name || 'User',
+          actorAvatar: currentUserData?.avatarUrl || '',
+          createdAt: serverTimestamp(),
+          read: false
+        });
+      } catch (e) { console.warn('Notification failed:', e); }
+    }
+
+    function notificationText(n) {
+      const name = escapeHtml(n.actorName || 'Someone');
+      if (n.type === 'friend_request') return `<strong>${name}</strong> sent you a friend request.`;
+      if (n.type === 'friend_accept') return `<strong>${name}</strong> accepted your friend request.`;
+      if (n.type === 'reaction') return `<strong>${name}</strong> reacted ${escapeHtml(n.reaction || '👍')} to your post.`;
+      if (n.type === 'comment') return `<strong>${name}</strong> commented on your post.`;
+      if (n.type === 'message') return `<strong>${name}</strong> sent you a message.`;
+      if (n.type === 'story_view') return `<strong>${name}</strong> viewed your story.`;
+      if (n.type === 'group_message') return `<strong>${name}</strong> sent a message in <strong>${escapeHtml(n.groupName || 'a group')}</strong>.`;
+      return `<strong>${name}</strong> interacted with you.`;
+    }
+
+    function notificationTarget(n) {
+      if (n.type === 'friend_request' || n.type === 'friend_accept') return () => openProfile(n.actorId);
+      if (n.type === 'reaction' || n.type === 'comment') return () => { switchTab('feed'); setTimeout(() => document.getElementById(`post-${n.postId}`)?.scrollIntoView({behavior:'smooth', block:'center'}), 150); };
+      if (n.type === 'message') return () => { switchTab('messages'); setTimeout(() => openChat(n.actorId, n.actorName || 'User', 'single'), 0); };
+      if (n.type === 'group_message' && n.groupId) return () => { switchTab('messages'); setTimeout(() => openChat(n.groupId, n.groupName || 'Group', 'group'), 0); };
+      return () => {};
+    }
+
+    function formatNotificationTime(ts) {
+      if (!ts) return 'Just now';
+      const ms = ts.toMillis ? ts.toMillis() : (typeof ts === 'number' ? ts : Date.parse(ts));
+      if (!ms) return 'Just now';
+      const diff = Math.max(0, Date.now() - ms);
+      const sec = Math.floor(diff/1000);
+      if (sec < 60) return 'Just now';
+      const min = Math.floor(sec/60);
+      if (min < 60) return `${min}m ago`;
+      const hr = Math.floor(min/60);
+      if (hr < 24) return `${hr}h ago`;
+      const day = Math.floor(hr/24);
+      return day === 1 ? 'Yesterday' : `${day}d ago`;
+    }
+
+    let notificationsCache = [];
+    function renderNotifications() {
+      const list = document.getElementById('notificationList');
+      if (!list) return;
+      list.innerHTML = '';
+      if (!notificationsCache.length) { list.innerHTML = '<div class="notification-empty">🔔 No notifications yet.</div>'; return; }
+      notificationsCache.forEach(n => {
+        const row = document.createElement('div');
+        row.className = 'notification-row' + (n.read ? '' : ' unread');
+        const avatar = n.actorAvatar ? `<img src="${escapeHtml(n.actorAvatar)}">` : escapeHtml((n.actorName || 'U')[0].toUpperCase());
+        row.innerHTML = `<div class="notification-avatar">${avatar}</div><div class="notification-text">${notificationText(n)}<div class="notification-time">${formatNotificationTime(n.createdAt)}</div></div>${n.read ? '' : '<span class="notification-dot"></span>'}`;
+        row.onclick = async () => {
+          if (!n.read && n.id) { try { await updateDoc(doc(db, 'users', currentUser.uid, 'notifications', n.id), {read:true, readAt:serverTimestamp()}); } catch (_) {} }
+          notificationTarget(n)();
+        };
+        list.appendChild(row);
+      });
+    }
+
+    function updateNotificationBadge() {
+      const unread = notificationsCache.filter(n => !n.read).length;
+      const badge = document.getElementById('notificationsBadge');
+      if (badge) { badge.innerText = unread; badge.classList.toggle('hidden', unread === 0); }
+    }
+
+    function listenToNotifications() {
+      if (!currentUser) return;
+      if (notificationUnsubscribe) { try { notificationUnsubscribe(); } catch (_) {} }
+      const q = query(collection(db, 'users', currentUser.uid, 'notifications'), orderBy('createdAt', 'desc'), limit(80));
+      notificationUnsubscribe = onSnapshot(q, snapshot => {
+        notificationsCache = [];
+        snapshot.forEach(d => {
+          const data = d.data();
+          if (data.type === 'message' || data.type === 'group_message') return;
+          notificationsCache.push({id:d.id, ...data});
+        });
+        updateNotificationBadge();
+        if (document.getElementById('notificationsTab')?.classList.contains('active')) renderNotifications();
+      }, err => { console.warn('Notification listener:', err); });
+    }
+
+    async function markVisibleNotificationsRead() {
+      const unread = notificationsCache.filter(n => !n.read).slice(0, 80);
+      await Promise.allSettled(unread.map(n => updateDoc(doc(db, 'users', currentUser.uid, 'notifications', n.id), {read:true, readAt:serverTimestamp()})));
+    }
+
+    document.getElementById('markAllNotificationsReadBtn').onclick = async () => {
+      if (!currentUser) return;
+      await markVisibleNotificationsRead();
+      renderNotifications();
+    };
 
     // Friend Requests & User Relationships Management
     window.sendFriendRequest = async (targetUid) => {
       await updateDoc(doc(db, "users", targetUid), {
         requestsReceived: arrayUnion(currentUser.uid)
       });
+      await createNotification(targetUid, {type:'friend_request'});
       alert("Friend request sent!");
     };
 
@@ -907,6 +1298,7 @@
       await updateDoc(doc(db, "users", senderUid), {
         friends: arrayUnion(currentUser.uid)
       });
+      await createNotification(senderUid, {type:'friend_accept'});
       alert("Friend request accepted!");
     };
 
@@ -1125,6 +1517,8 @@
       document.getElementById('pBio').innerText = u.bio || "No bio available";
 
       const isMe = uid === currentUser.uid;
+      const uploadLabel = document.getElementById('profileAvatarUploadLabel');
+      if (uploadLabel) uploadLabel.style.display = isMe ? 'block' : 'none';
       const myFriends = currentUserData?.friends || [];
       const isFriend = myFriends.includes(uid);
       const privacy = u.privacy || 'Public';
@@ -1137,25 +1531,27 @@
         const hasReceivedReq = (currentUserData?.requestsReceived || []).includes(uid);
         const hasSentReq = (u.requestsReceived || []).includes(currentUser.uid);
 
+        const messageButton = `<button class="btn-sm" onclick="messageFromProfile('${u.uid}')">💬 Message</button>`;
         if (isFriend) {
           actionBtnArea.innerHTML = `
-            <div style="display:flex; gap:8px; justify-content:center;">
+            <div style="display:flex; gap:8px; justify-content:center; flex-wrap:wrap;">
               <button class="btn-secondary btn-sm">✓ Friends</button>
-              <button class="btn-sm" onclick="openChat('${u.uid}', '${u.name}', 'single'); switchTab('messages');">💬 Message</button>
+              ${messageButton}
               <button class="btn-danger btn-sm" onclick="unfriendUser('${u.uid}')">Unfriend</button>
             </div>
           `;
         } else if (hasReceivedReq) {
           actionBtnArea.innerHTML = `
-            <div style="display:flex; gap:8px; justify-content:center;">
+            <div style="display:flex; gap:8px; justify-content:center; flex-wrap:wrap;">
+              ${messageButton}
               <button class="btn-success btn-sm" onclick="acceptRequest('${u.uid}')">Accept Request</button>
               <button class="btn-danger btn-sm" onclick="declineRequest('${u.uid}')">Decline</button>
             </div>
           `;
         } else if (hasSentReq) {
-          actionBtnArea.innerHTML = `<button class="btn-secondary btn-sm" onclick="cancelFriendRequest('${u.uid}')">Request Sent (Cancel)</button>`;
+          actionBtnArea.innerHTML = `<div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;">${messageButton}<button class="btn-secondary btn-sm" onclick="cancelFriendRequest('${u.uid}')">Request Sent (Cancel)</button></div>`;
         } else {
-          actionBtnArea.innerHTML = `<button class="btn-sm" onclick="sendFriendRequest('${u.uid}')">+ Add Friend</button>`;
+          actionBtnArea.innerHTML = `<div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;">${messageButton}<button class="btn-sm" onclick="sendFriendRequest('${u.uid}')">+ Add Friend</button></div>`;
         }
       }
 
@@ -1189,7 +1585,7 @@
       }
 
       const avatarEl = document.getElementById('pAvatar');
-      avatarEl.innerHTML = u.avatarUrl ? `<img src="${u.avatarUrl}">` : (u.name ? u.name[0].toUpperCase() : 'U');
+      avatarEl.innerHTML = u.avatarUrl ? `<img src="${escapeHtml(u.avatarUrl)}" alt="Profile picture">` : (u.name ? escapeHtml(u.name[0].toUpperCase()) : 'U');
     };
 
     function renderProfileFriendsList(friendsListUids) {
@@ -1279,27 +1675,103 @@
     document.getElementById('profileAvatarInput').onchange = async (e) => {
       const file = e.target.files[0];
       if (!file) return;
-      const base64 = await convertBase64(file);
-      await updateDoc(doc(db, "users", currentUser.uid), { avatarUrl: base64 });
-      openProfile(currentUser.uid);
+      try {
+        setComposerStatus?.('');
+        let compressed = await compressChatPhoto(file, 500, 0.68);
+        if (compressed.size > 700 * 1024) compressed = await compressChatPhoto(file, 420, 0.55);
+        let avatarUrl = '';
+        const uploadStamp = Date.now();
+        try {
+          const ext = 'jpg';
+          const ref = storageRef(storage, `avatars/${currentUser.uid}/profile_${uploadStamp}.${ext}`);
+          await withTimeout(uploadBytes(ref, compressed, {contentType:'image/jpeg'}), 30000, 'Profile photo upload timed out.');
+          avatarUrl = await withTimeout(getDownloadURL(ref), 15000, 'Could not get profile photo URL.');
+          avatarUrl += (avatarUrl.includes('?') ? '&' : '?') + 'v=' + uploadStamp;
+        } catch (storageErr) {
+          avatarUrl = await blobToDataUrl(compressed);
+        }
+        await updateDoc(doc(db, "users", currentUser.uid), { avatarUrl });
+        try { await updateProfile(currentUser, { photoURL: avatarUrl }); } catch (_) {}
+        currentUserData = {...currentUserData, avatarUrl};
+        refreshCreateStoryCard();
+        if (currentUser) {
+          currentUser.photoURL = avatarUrl;
+          try { await updateProfile(currentUser, { photoURL: avatarUrl }); } catch (_) {}
+        }
+        const cached = allUsersCache.find(u => u.uid === currentUser.uid);
+        if (cached) cached.avatarUrl = avatarUrl;
+        else allUsersCache.push({...currentUserData});
+        const avatarEl = document.getElementById('pAvatar');
+        if (avatarEl) avatarEl.innerHTML = `<img src="${escapeHtml(avatarUrl)}" alt="Profile picture" loading="eager">`;
+        document.querySelectorAll('.avatar[data-user-avatar="' + currentUser.uid + '"]').forEach(el => {
+          el.innerHTML = `<img src="${escapeHtml(avatarUrl)}" alt="Profile picture">`;
+        });
+        // Refresh the currently visible profile immediately, like Facebook's instant update.
+        await openProfile(currentUser.uid);
+        alert('Profile picture updated successfully!');
+      } catch (err) {
+        alert('Profile picture upload failed: ' + err.message);
+      } finally {
+        e.target.value = '';
+      }
     };
+
+    window.messageFromProfile = async (uid) => {
+      if (!currentUser || !uid || uid === currentUser.uid) return;
+      let u = allUsersCache.find(x => x.uid === uid);
+      if (!u) {
+        try {
+          const snap = await getDoc(doc(db, 'users', uid));
+          if (snap.exists()) u = snap.data();
+        } catch (err) { return alert('Could not open this profile chat: ' + err.message); }
+      }
+      if (!u) return alert('User not found.');
+      if (chatUnsubscribe) { try { chatUnsubscribe(); } catch (_) {} chatUnsubscribe = null; }
+      activeChatUid = null;
+      activeChatType = 'single';
+      switchTab('messages');
+      await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+      await openChat(uid, u.name || 'User', 'single');
+    };
+
+    window.viewProfilePhoto = () => {
+      const img = document.querySelector('#pAvatar img');
+      const src = img?.currentSrc || img?.src || '';
+      if (!src) return alert('No profile picture uploaded yet.');
+      const viewer = document.getElementById('imageViewerModal');
+      const viewerImg = document.getElementById('imageViewerImg');
+      viewerImg.src = src;
+      viewer.classList.remove('hidden');
+    };
+
+    document.getElementById('closeImageViewerBtn').onclick = () => document.getElementById('imageViewerModal').classList.add('hidden');
+    document.getElementById('imageViewerModal').onclick = (e) => {
+      if (e.target.id === 'imageViewerModal') e.currentTarget.classList.add('hidden');
+    };
+    document.getElementById('closeReactionViewerBtn').onclick = () => document.getElementById('reactionViewerModal').classList.add('hidden');
 
     // Stories System (Fix for Public Display, View Counts & Refresh Issues)
     document.getElementById('storyImageInput').onchange = async (e) => {
       const file = e.target.files[0];
       if (!file) return;
-      const imgData = await convertBase64(file);
-      const privacy = document.getElementById('storyPrivacySelect').value;
-
-      await addDoc(collection(db, "stories"), {
-        userId: currentUser.uid,
-        userName: currentUser.displayName || "User",
-        imageUrl: imgData,
-        privacy: privacy,
-        views: [],
-        createdAt: serverTimestamp()
-      });
-      alert("Story published successfully!");
+      try {
+        const imgData = await convertBase64(file);
+        const privacy = document.getElementById('storyPrivacySelect').value;
+        await addDoc(collection(db, "stories"), {
+          userId: currentUser.uid,
+          userName: currentUser.displayName || currentUserData?.name || "User",
+          userAvatar: currentUserData?.avatarUrl || "",
+          imageUrl: imgData,
+          privacy,
+          views: [],
+          createdAt: serverTimestamp()
+        });
+        alert("Story published successfully! It will stay for 24 hours.");
+      } catch (err) {
+        alert("Story upload failed: " + err.message);
+      } finally {
+        e.target.value = '';
+      }
     };
 
     function loadStories() {
@@ -1310,74 +1782,155 @@
         if (archiveContainer) archiveContainer.innerHTML = "";
 
         const now = Date.now();
-        const TWENTY_FOUR_HOURS = 24 * 60 * 60 * 1000;
         const myFriends = currentUserData?.friends || [];
+        const groups = new Map();
 
         snapshot.forEach((docSnap) => {
           const s = docSnap.data();
-          const storyId = docSnap.id;
-          
-          // Safe handling for serverTimestamp local delay
-          const storyTime = s.createdAt ? (s.createdAt.toMillis ? s.createdAt.toMillis() : (typeof s.createdAt === 'number' ? s.createdAt : Date.parse(s.createdAt) || now)) : now;
-          const isExpired = (now - storyTime) > TWENTY_FOUR_HOURS;
-
+          const createdMs = timestampMs(s.createdAt) || now;
+          const isExpired = (now - createdMs) >= 24*60*60*1000;
           const isOwner = s.userId === currentUser.uid;
           const isFriend = myFriends.includes(s.userId);
           const isPublic = s.privacy === 'Public' || !s.privacy;
+          if (!isOwner && !isPublic && (!isFriend || s.privacy === 'Only Me')) return;
 
-          // Corrected privacy filter
-          if (!isOwner && !isPublic && (!isFriend || s.privacy === 'Only Me')) {
-            return;
+          const item = {id: docSnap.id, ...s, _createdMs: createdMs, _expired: isExpired};
+          if (!groups.has(s.userId)) groups.set(s.userId, []);
+          groups.get(s.userId).push(item);
+        });
+
+        groups.forEach((stories, uid) => {
+          stories.sort((a,b) => a._createdMs - b._createdMs);
+          const active = stories.filter(s => !s._expired);
+          const expired = stories.filter(s => s._expired);
+
+          // Only one active Facebook-like story box per person.
+          if (active.length) {
+            const card = document.createElement('div');
+            card.className = 'story-stack-card';
+            const first = active[0];
+            const name = first.userName || 'User';
+            const avatar = first.userAvatar
+              ? `<img src="${escapeHtml(first.userAvatar)}" alt="">`
+              : escapeHtml(name[0]?.toUpperCase() || 'U');
+
+            card.innerHTML = `
+              <div class="story-stack-dots">${active.map((_,i)=>`<span class="${i===0?'active':''}"></span>`).join('')}</div>
+              ${active.map((s,i)=>`<img class="story-slide ${i===0?'active':''}" src="${escapeHtml(s.imageUrl || '')}" data-story-id="${escapeHtml(s.id)}" alt="Story ${i+1}">`).join('')}
+              <div class="story-slide-shade"></div>
+              <div class="story-stack-name"><span class="story-stack-avatar">${avatar}</span>${escapeHtml(name)}</div>
+              <span class="story-stack-count">${active.length} ${active.length===1?'story':'stories'}</span>
+            `;
+
+            let index = 0;
+            const slides = () => Array.from(card.querySelectorAll('.story-slide'));
+            const dots = () => Array.from(card.querySelectorAll('.story-stack-dots span'));
+            const showIndex = (i) => {
+              const ss = slides(), dd = dots();
+              if (!ss.length) return;
+              index = Math.max(0, Math.min(i, ss.length-1));
+              ss.forEach((el,j)=>el.classList.toggle('active', j===index));
+              dd.forEach((el,j)=>el.classList.toggle('active', j===index));
+            };
+            card.onclick = (ev) => {
+  const rect = card.getBoundingClientRect(), x = ev.clientX - rect.left, ss = slides();
+  if (ss.length > 1 && x < rect.width*.30 && index > 0) { showIndex(index-1); return; }
+  if (ss.length > 1 && x > rect.width*.70 && index < ss.length-1) { showIndex(index+1); return; }
+  showFullscreenStory(active[index].id, active[index]);
+};
+            activeContainer.appendChild(card);
           }
 
-          const card = document.createElement('div');
-          card.className = 'story-card';
-          card.innerHTML = `
-            <img src="${s.imageUrl}" class="story-bg">
-            <span class="story-privacy-badge">${s.privacy || 'Public'}</span>
-            <span class="story-user-name">${s.userName}</span>
-          `;
-          card.onclick = () => showFullscreenStory(storyId, s);
-
-          if (!isExpired) {
-            activeContainer.appendChild(card);
-          } else if (isOwner && archiveContainer) {
+          // Keep archived stories grouped too.
+          if (expired.length && firstOwner(uid) && archiveContainer) {
+            const card = document.createElement('div');
+            card.className = 'story-stack-card';
+            const first = expired[expired.length-1];
+            const name = first.userName || 'User';
+            const avatar = first.userAvatar ? `<img src="${escapeHtml(first.userAvatar)}">` : escapeHtml(name[0]?.toUpperCase() || 'U');
+            card.innerHTML = `
+              <div class="story-stack-dots">${expired.map((_,i)=>`<span class="${i===expired.length-1?'active':''}"></span>`).join('')}</div>
+              <img class="story-slide active" src="${escapeHtml(first.imageUrl || '')}">
+              <div class="story-slide-shade"></div>
+              <div class="story-stack-name"><span class="story-stack-avatar">${avatar}</span>${escapeHtml(name)}</div>
+              <span class="story-stack-count">${expired.length} archived</span>
+            `;
+            card.onclick = () => showFullscreenStory(first.id, first);
             archiveContainer.appendChild(card);
           }
         });
-      });
+
+        refreshCreateStoryCard();
+        startStoryCountdownTicker();
+      }, err => console.warn('Stories listener failed:', err));
     }
 
-    async function showFullscreenStory(id, storyData) {
-      currentStoryData = { id, ...storyData };
-      document.getElementById('storyAuthor').innerText = storyData.userName;
-      document.getElementById('storyTime').innerText = storyData.createdAt?.toMillis ? new Date(storyData.createdAt.toMillis()).toLocaleTimeString() : 'Just now';
-      document.getElementById('storyImg').src = storyData.imageUrl;
-      
-      const isOwner = storyData.userId === currentUser.uid;
-      document.getElementById('storyMenuContainer').style.display = isOwner ? 'block' : 'none';
+    function firstOwner(uid) { return uid === currentUser?.uid; }
 
-      // Record Story View (Unique Viewers tracked with names)
+
+    async function showFullscreenStory(id, storyData) {
+      // Open the guaranteed overlay FIRST. Firebase/view recording must never block viewing.
+      currentStoryData = { id, ...storyData, views: Array.isArray(storyData.views) ? [...storyData.views] : [] };
+
+      const viewer = document.getElementById('mwishStoryViewer');
+      const img = document.getElementById('mwishStoryImage');
+      const nameEl = document.getElementById('mwishStoryName');
+      const timeEl = document.getElementById('mwishStoryTime');
+      const avatarEl = document.getElementById('mwishStoryAvatar');
+      const countEl = document.getElementById('mwishStoryViewCount');
+
+      viewer.style.display = 'block';
+      document.body.style.overflow = 'hidden';
+
+      const storyName = storyData.userName || 'User';
+      nameEl.textContent = storyName;
+      const createdMs = storyData._createdMs || timestampMs(storyData.createdAt) || Date.now();
+      timeEl.textContent = formatStoryFullDate(createdMs);
+
+      avatarEl.innerHTML = storyData.userAvatar
+        ? `<img src="${escapeHtml(storyData.userAvatar)}" style="width:100%;height:100%;object-fit:cover;">`
+        : escapeHtml(storyName[0]?.toUpperCase() || 'U');
+
+      img.style.display = 'block';
+      img.onerror = () => {
+        img.alt = 'Story image could not be loaded';
+      };
+      img.src = storyData.imageUrl || '';
+
+      countEl.textContent = `👁️ ${currentStoryData.views.length} view${currentStoryData.views.length === 1 ? '' : 's'}`;
+
+      const progress = document.getElementById('mwishStoryProgress');
+      progress.style.width = '100%';
+
+      // Record view separately; even if Firestore rejects it, the viewer stays open.
+      const isOwner = storyData.userId === currentUser?.uid;
       if (!isOwner && currentUser) {
-        const storyRef = doc(db, "stories", id);
-        const existingViews = storyData.views || [];
-        const alreadyViewed = existingViews.some(v => v.uid === currentUser.uid);
+        const alreadyViewed = currentStoryData.views.some(v => v && v.uid === currentUser.uid);
         if (!alreadyViewed) {
-          await updateDoc(storyRef, {
-            views: arrayUnion({
-              uid: currentUser.uid,
-              name: currentUser.displayName || currentUserData?.name || "User",
-              time: Date.now()
-            })
-          });
+          const newView = {
+            uid: currentUser.uid,
+            name: currentUser.displayName || currentUserData?.name || 'User',
+            time: Date.now()
+          };
+          currentStoryData.views.push(newView);
+          countEl.textContent = `👁️ ${currentStoryData.views.length} views`;
+          try {
+            await updateDoc(doc(db, 'stories', id), {views: arrayUnion(newView)});
+          } catch (err) {
+            console.warn('Story view could not be saved:', err);
+          }
+          try {
+            await createNotification(storyData.userId, {type:'story_view'});
+          } catch (_) {}
         }
       }
+    }
 
-      const viewsArr = storyData.views || [];
-      document.getElementById('storyViewCountText').innerText = `👁️ ${viewsArr.length} view${viewsArr.length === 1 ? '' : 's'}`;
-      document.getElementById('viewersListBtn').style.display = isOwner ? 'inline-block' : 'none';
-
-      document.getElementById('storyModal').classList.remove('hidden');
+    function formatStoryFullDate(ms) {
+      return new Date(ms).toLocaleString([], {
+        day:'2-digit', month:'short', year:'numeric',
+        hour:'2-digit', minute:'2-digit'
+      });
     }
 
     window.toggleViewersList = () => {
@@ -1410,7 +1963,24 @@
       }
     };
 
-    document.getElementById('closeStoryModal').onclick = () => document.getElementById('storyModal').classList.add('hidden');
+    document.getElementById('closeStoryModal').onclick = () => {
+      const modal=document.getElementById('storyModal');
+      modal.classList.add('hidden');
+      modal.style.cssText='';
+      const img=document.getElementById('storyImg');
+      img.src='';
+      img.style.cssText='';
+      if (storyCountdownInterval) { clearInterval(storyCountdownInterval); storyCountdownInterval = null; }
+    };
+
+
+    document.getElementById('mwishStoryClose').onclick = () => {
+      const viewer = document.getElementById('mwishStoryViewer');
+      const img = document.getElementById('mwishStoryImage');
+      viewer.style.display = 'none';
+      img.src = '';
+      document.body.style.overflow = '';
+    };
 
     // Posts System
     document.getElementById('postImageInput').onchange = async (e) => {
@@ -1486,20 +2056,31 @@
     function renderPostCard(post, postId, container) {
       const myReaction = post.reactions ? post.reactions[currentUser.uid] : null;
       const isOwner = post.userId === currentUser.uid;
+      const author = allUsersCache.find(u => u.uid === post.userId) || {};
+      const authorName = post.userName || author.name || "User";
+      const authorAvatar = author.avatarUrl || post.userAvatar || "";
+      const reactionCount = Object.keys(post.reactions || {}).length;
+      const postComments = Array.isArray(post.comments) ? post.comments : [];
 
       const postEl = document.createElement('div');
       postEl.className = 'card';
+      postEl.id = `post-${postId}`;
       postEl.innerHTML = `
         <div class="post-header">
           <div class="post-user-info" onclick="openProfile('${post.userId}')">
-            <div class="avatar">${post.userName ? post.userName[0].toUpperCase() : 'U'}</div>
-            <div>
-              <strong>${post.userName}</strong>
-              ${post.feeling ? `<span style="color: var(--text-muted); font-size: 12px;"> is ${post.feeling}</span>` : ''}
-              <div style="font-size: 11px; color: var(--text-muted);">${post.privacy || 'Public'}</div>
+            <div class="post-author-avatar">
+              ${authorAvatar ? `<img src="${escapeHtml(authorAvatar)}" alt="${escapeHtml(authorName)}">` : escapeHtml(authorName[0]?.toUpperCase() || 'U')}
+            </div>
+            <div style="min-width:0;">
+              <strong>${escapeHtml(authorName)}</strong>
+              ${post.feeling ? `<span style="color:var(--text-muted);font-size:12px;"> is ${escapeHtml(post.feeling)}</span>` : ''}
+              <div class="post-privacy-time">
+                <span>${escapeHtml(post.privacy || 'Public')}</span>
+                <span>•</span>
+                <span class="post-time">${formatPostDateTime(post.createdAt)}</span>
+              </div>
             </div>
           </div>
-
           <div class="dropdown-menu-wrap">
             <button class="dropdown-btn" onclick="togglePostMenu('${postId}', event)">⋮</button>
             <div class="dropdown-menu" id="postMenu-${postId}">
@@ -1512,39 +2093,246 @@
             </div>
           </div>
         </div>
-
-        ${post.text ? `<p id="postText-${postId}" style="white-space: pre-line;">${post.text}</p>` : ''}
-        ${post.imageUrl ? `<img src="${post.imageUrl}" class="post-image">` : ''}
-
+        ${post.text ? `<p id="postText-${postId}" style="white-space:pre-line;">${escapeHtml(post.text)}</p>` : ''}
+        ${post.imageUrl ? `<img src="${escapeHtml(post.imageUrl)}" class="post-image">` : ''}
         <div class="post-actions">
           <div class="reactions-wrapper">
             <div class="reactions-box" id="reactBox-${postId}">
-              <span class="react-icon" onclick="setReaction('${postId}', '👍')">👍</span>
-              <span class="react-icon" onclick="setReaction('${postId}', '❤️')">❤️</span>
-              <span class="react-icon" onclick="setReaction('${postId}', '🤗')">🤗</span>
-              <span class="react-icon" onclick="setReaction('${postId}', '😆')">😆</span>
-              <span class="react-icon" onclick="setReaction('${postId}', '😮')">😮</span>
-              <span class="react-icon" onclick="setReaction('${postId}', '😢')">😢</span>
-              <span class="react-icon" onclick="setReaction('${postId}', '😡')">😡</span>
+              <span class="react-icon" onclick="setReaction('${postId}','👍')">👍</span>
+              <span class="react-icon" onclick="setReaction('${postId}','❤️')">❤️</span>
+              <span class="react-icon" onclick="setReaction('${postId}','🤗')">🤗</span>
+              <span class="react-icon" onclick="setReaction('${postId}','😆')">😆</span>
+              <span class="react-icon" onclick="setReaction('${postId}','😮')">😮</span>
+              <span class="react-icon" onclick="setReaction('${postId}','😢')">😢</span>
+              <span class="react-icon" onclick="setReaction('${postId}','😡')">😡</span>
             </div>
-            <button class="action-btn" onclick="toggleReactionBox('${postId}')">
-              ${myReaction || '👍'} ${Object.keys(post.reactions || {}).length}
-            </button>
+            <button class="action-btn" onclick="toggleReactionBox('${postId}')">${myReaction || '👍'} ${reactionCount}</button>
           </div>
-
-          <button class="action-btn" onclick="toggleComments('${postId}')">💬 ${post.comments?.length || 0}</button>
+          ${reactionCount ? `<button class="reaction-summary-btn" onclick="showPostReactions('${postId}')">👥 ${reactionCount} ${reactionCount === 1 ? 'reaction' : 'reactions'}</button>` : ''}
+          <button class="action-btn" onclick="toggleComments('${postId}')">💬 ${postComments.length || 0}</button>
           <button class="action-btn" onclick="sharePost('${postId}')">↗️ Share</button>
         </div>
-
-        <div class="comments-sec hidden" id="comments-${postId}" style="margin-top: 10px;">
-          <div id="commentList-${postId}">
-            ${(post.comments || []).map(c => `<div style="background:#0f172a; padding:6px; border-radius:6px; margin:4px 0; font-size:12px;"><strong>${c.userName}:</strong> ${c.text}</div>`).join('')}
-          </div>
-          <input type="text" placeholder="Write comment..." onkeydown="addComment(event, '${postId}')">
-        </div>
-      `;
+        <div class="comments-sec ${openCommentSections.has(postId) ? '' : 'hidden'}" id="comments-${postId}" style="margin-top:10px;">
+      <div id="commentList-${postId}">${renderCommentsHtml(postComments,postId)}</div>
+      <div class="comment-compose-row">
+        <input id="commentInput-${postId}" type="text" placeholder="Write comment..." onkeydown="addComment(event,'${postId}')">
+        <button type="button" class="comment-send-btn" onclick="sendComment('${postId}')">Send</button>
+      </div>
+    </div>`;
       container.appendChild(postEl);
     }
+
+
+
+
+    function commentStableId(c, index, path='c') {
+      return c.id || `legacy_${path}_${c.userId || 'u'}_${timestampMs(c.createdAt) || c.createdAt || '0'}_${index}`;
+    }
+
+    function commentRelativeTime(value) {
+      const ms = timestampMs(value) || Number(value) || Date.now();
+      const diff = Math.max(0, Date.now() - ms);
+      const sec = Math.floor(diff / 1000);
+      if (sec < 10) return 'Just now';
+      if (sec < 60) return `${sec}s ago`;
+      const min = Math.floor(sec / 60);
+      if (min < 60) return `${min}m ago`;
+      const hr = Math.floor(min / 60);
+      if (hr < 24) return `${hr}h ago`;
+      const day = Math.floor(hr / 24);
+      if (day < 7) return `${day}d ago`;
+      const week = Math.floor(day / 7);
+      if (week < 5) return `${week}w ago`;
+      return new Date(ms).toLocaleDateString();
+    }
+
+    function commentExactTime(value) {
+      const ms = timestampMs(value) || Number(value) || Date.now();
+      return new Date(ms).toLocaleString([], {
+        day:'2-digit', month:'short', year:'numeric',
+        hour:'2-digit', minute:'2-digit'
+      });
+    }
+
+    function commentAvatarHtml(c) {
+      const avatar = c.userAvatar || allUsersCache.find(x=>x.uid===c.userId)?.avatarUrl || '';
+      return avatar
+        ? `<img src="${escapeHtml(avatar)}" alt="">`
+        : escapeHtml((c.userName||'U')[0].toUpperCase());
+    }
+
+    function mutateCommentTree(comments, key, fn, path='c') {
+      for (let i=0; i<(comments || []).length; i++) {
+        const c = comments[i];
+        const stable = commentStableId(c, i, path);
+        if (String(stable) === String(key)) {
+          if (!c.id) c.id = stable;
+          fn(c);
+          return true;
+        }
+        if (mutateCommentTree(c.replies || [], key, fn, `${path}.${i}`)) return true;
+      }
+      return false;
+    }
+
+    function renderCommentsHtml(comments, postId, path='c') {
+      return (comments || []).map((c, i) => {
+        const key = commentStableId(c, i, path);
+        const r = c.reactions || {};
+        const count = Object.keys(r).length;
+        const replies = Array.isArray(c.replies) ? c.replies : [];
+        const mine = c.userId === currentUser.uid;
+        const exact = commentExactTime(c.createdAt);
+
+        return `<div class="comment-row">
+          <div class="comment-avatar">${commentAvatarHtml(c)}</div>
+          <div style="flex:1;min-width:0;">
+            <div class="comment-bubble">
+              <strong>${escapeHtml(c.userName||'User')}</strong>
+              <div>${escapeHtml(c.text||'')}</div>
+            </div>
+            <div class="comment-actions">
+              <span class="comment-action" onclick="setCommentReaction('${escapeHtml(postId)}','${escapeHtml(key)}','👍')">
+                👍 ${count || 'Like'}
+              </span>
+              <span class="comment-action" onclick="showReplyInput('${escapeHtml(key)}')">Reply</span>
+              ${mine ? `<span class="comment-menu-wrap">
+                <button class="comment-menu-btn" onclick="toggleCommentMenu(event,'${escapeHtml(key)}')">⋮</button>
+                <span class="comment-menu" id="commentMenu-${escapeHtml(key)}">
+                  <div onclick="editComment('${escapeHtml(postId)}','${escapeHtml(key)}')">✏️ Edit</div>
+                  <div style="color:#ef4444" onclick="deleteComment('${escapeHtml(postId)}','${escapeHtml(key)}')">🗑 Delete</div>
+                </span>
+              </span>` : ''}
+            </div>
+            <div class="comment-time" title="${escapeHtml(exact)}">${escapeHtml(commentRelativeTime(c.createdAt))} • ${escapeHtml(exact)}${c.editedAt ? ' • edited' : ''}</div>
+
+            <div class="reply-compose-row" id="replyRow-${escapeHtml(key)}">
+              <input class="comment-reply-input" id="replyInput-${escapeHtml(key)}"
+                placeholder="Write a reply..."
+                onkeydown="addCommentReply(event,'${escapeHtml(postId)}','${escapeHtml(key)}')">
+              <button type="button" class="comment-send-btn"
+                onclick="sendCommentReply('${escapeHtml(postId)}','${escapeHtml(key)}')">Send</button>
+            </div>
+
+            <div class="comment-reply-list">${renderCommentsHtml(replies, postId, `${path}.${i}`)}</div>
+          </div>
+        </div>`;
+      }).join('');
+    }
+
+    window.toggleCommentMenu = (event, key) => {
+      event.stopPropagation();
+      document.querySelectorAll('.comment-menu').forEach(m => {
+        if (m.id !== `commentMenu-${key}`) m.classList.remove('show');
+      });
+      document.getElementById(`commentMenu-${key}`)?.classList.toggle('show');
+    };
+
+    window.showReplyInput = (key) => {
+      const row = document.getElementById(`replyRow-${key}`);
+      const input = document.getElementById(`replyInput-${key}`);
+      if (row) row.classList.add('show');
+      if (input) { input.style.display='block'; input.focus(); }
+    };
+
+    window.setCommentReaction = async (postId, key, reaction='👍') => {
+      try {
+        const ref = doc(db,'posts',postId);
+        const snap = await getDoc(ref);
+        if (!snap.exists()) throw Error('Post not found');
+        const comments = snap.data().comments || [];
+        if (!mutateCommentTree(comments,key,c => {
+          c.reactions = c.reactions || {};
+          if (c.reactions[currentUser.uid] === reaction) delete c.reactions[currentUser.uid];
+          else c.reactions[currentUser.uid] = reaction;
+        })) throw Error('Comment not found');
+        await updateDoc(ref,{comments});
+        openCommentSections.add(postId);
+      } catch(err) {
+        console.error(err);
+        alert('Comment reaction failed: '+err.message);
+      }
+    };
+
+    window.editComment = async (postId, key) => {
+      try {
+        const ref=doc(db,'posts',postId);
+        const snap=await getDoc(ref);
+        if(!snap.exists()) throw Error('Post not found');
+        const comments=snap.data().comments || [];
+        let target=null;
+        mutateCommentTree(comments,key,c=>{target=c;});
+        if(!target) throw Error('Comment not found');
+        if(target.userId !== currentUser.uid) throw Error('You can only edit your own comment');
+        const next=prompt('Edit comment:',target.text || '');
+        if(next===null) return;
+        const text=next.trim();
+        if(!text) return alert('Comment cannot be empty.');
+        target.text=text;
+        target.editedAt=Date.now();
+        await updateDoc(ref,{comments});
+        openCommentSections.add(postId);
+      }catch(err){console.error(err);alert('Comment edit failed: '+err.message);}
+    };
+
+    window.deleteComment = async (postId, key) => {
+      if(!confirm('Delete this comment?')) return;
+      try {
+        const ref=doc(db,'posts',postId);
+        const snap=await getDoc(ref);
+        if(!snap.exists()) throw Error('Post not found');
+        const comments=snap.data().comments || [];
+        let deleted=false;
+        function removeTree(list,path='c'){
+          for(let i=list.length-1;i>=0;i--){
+            const c=list[i];
+            const stable=commentStableId(c,i,path);
+            if(String(stable)===String(key)){
+              if(c.userId!==currentUser.uid) throw Error('You can only delete your own comment');
+              list.splice(i,1); deleted=true; return true;
+            }
+            if(removeTree(c.replies||[],`${path}.${i}`)) return true;
+          }
+          return false;
+        }
+        removeTree(comments);
+        if(!deleted) throw Error('Comment not found');
+        await updateDoc(ref,{comments});
+        openCommentSections.add(postId);
+      }catch(err){console.error(err);alert('Comment delete failed: '+err.message);}
+    };
+
+    window.sendCommentReply = async(postId,parentKey) => {
+      const input=document.getElementById(`replyInput-${parentKey}`);
+      if(!input || !input.value.trim()) return;
+      const text=input.value.trim();
+      try{
+        const ref=doc(db,'posts',postId),snap=await getDoc(ref);
+        if(!snap.exists()) throw Error('Post not found');
+        const comments=snap.data().comments||[];
+        const reply={
+          id:`${currentUser.uid}_${Date.now()}`,
+          userId:currentUser.uid,
+          userName:currentUser.displayName||currentUserData?.name||'User',
+          userAvatar:currentUserData?.avatarUrl||'',
+          text,reactions:{},replies:[],createdAt:Date.now()
+        };
+        if(!mutateCommentTree(comments,parentKey,c=>{
+          c.replies=Array.isArray(c.replies)?c.replies:[];
+          c.replies.push(reply);
+        })) throw Error('Parent comment not found');
+        await updateDoc(ref,{comments});
+        input.value='';
+        openCommentSections.add(postId);
+        document.getElementById(`replyRow-${parentKey}`)?.classList.remove('show');
+      }catch(err){console.error(err);alert('Reply failed: '+err.message);}
+    };
+
+    window.addCommentReply=async(e,postId,parentKey)=>{
+      if(e.key!=='Enter'||e.shiftKey)return;
+      e.preventDefault();e.stopPropagation();
+      await sendCommentReply(postId,parentKey);
+    };
 
     window.togglePostMenu = (id, event) => {
       if (event) event.stopPropagation();
@@ -1592,19 +2380,99 @@
       const postDoc = await getDoc(postRef);
       if (!postDoc.exists()) return;
       const reactions = postDoc.data().reactions || {};
-      reactions[currentUser.uid] = reaction;
-      await updateDoc(postRef, { reactions });
+      if (reactions[currentUser.uid] === reaction) delete reactions[currentUser.uid];
+      else reactions[currentUser.uid] = reaction;
+      try {
+        await updateDoc(postRef, { reactions });
+        const ownerUid = postDoc.data().userId;
+        if (reactions[currentUser.uid] === reaction) await createNotification(ownerUid, {type:'reaction', reaction, postId});
+      } catch (err) {
+        alert('Reaction could not be saved: ' + err.message);
+      }
     };
 
-    window.toggleComments = (id) => document.getElementById(`comments-${id}`).classList.toggle('hidden');
+    window.showPostReactions = async (postId) => {
+      const snap = await getDoc(doc(db, "posts", postId));
+      if (!snap.exists()) return;
+      const reactions = snap.data().reactions || {};
+      const list = document.getElementById('reactionViewerList');
+      list.innerHTML = '';
+      const entries = Object.entries(reactions);
+      if (!entries.length) {
+        list.innerHTML = '<p style="color:var(--text-muted);text-align:center;padding:20px;">No reactions yet.</p>';
+      } else {
+        for (const [uid, emoji] of entries) {
+          let u = allUsersCache.find(x => x.uid === uid) || {};
+          if (!u.name) {
+            try { const us = await getDoc(doc(db, 'users', uid)); if (us.exists()) u = us.data(); } catch (_) {}
+          }
+          const name = u.name || 'User';
+          const avatar = u.avatarUrl ? `<img src="${escapeHtml(u.avatarUrl)}">` : escapeHtml(name[0]?.toUpperCase() || 'U');
+          const row = document.createElement('div');
+          row.className = 'reaction-list-row';
+          row.innerHTML = `<div class="reaction-list-avatar">${avatar}</div><div style="flex:1;"><strong>${escapeHtml(name)}</strong><div style="font-size:11px;color:var(--text-muted);">@${escapeHtml(u.username || 'user')}</div></div><span style="font-size:22px;">${escapeHtml(emoji)}</span>`;
+          row.onclick = () => { document.getElementById('reactionViewerModal').classList.add('hidden'); openProfile(uid); };
+          list.appendChild(row);
+        }
+      }
+      document.getElementById('reactionViewerModal').classList.remove('hidden');
+    };
+
+    window.toggleComments = (id) => {
+      const el = document.getElementById(`comments-${id}`);
+      if (!el) return;
+      const opening = el.classList.contains('hidden');
+      if (opening) {
+        openCommentSections.add(id);
+        el.classList.remove('hidden');
+        setTimeout(() => document.getElementById(`commentInput-${id}`)?.focus(), 0);
+      } else {
+        openCommentSections.delete(id);
+        el.classList.add('hidden');
+      }
+    };
+
+    window.sendComment = async (postId) => {
+      const input = document.getElementById(`commentInput-${postId}`);
+      if (!input || !input.value.trim()) return;
+      const commentText = input.value.trim();
+      try {
+        const postRef = doc(db, "posts", postId);
+        const postSnap = await getDoc(postRef);
+        if (!postSnap.exists()) throw new Error("Post not found");
+        await updateDoc(postRef, {
+          comments: arrayUnion({
+            id: `${currentUser.uid}_${Date.now()}`,
+            userId: currentUser.uid,
+            userName: currentUser.displayName || currentUserData?.name || "User",
+            userAvatar: currentUserData?.avatarUrl || "",
+            text: commentText,
+            reactions: {},
+            replies: [],
+            createdAt: Date.now()
+          })
+        });
+        if (postSnap.data().userId && postSnap.data().userId !== currentUser.uid) {
+          try { await createNotification(postSnap.data().userId, {type:'comment', postId}); } catch (_) {}
+        }
+        input.value = '';
+        openCommentSections.add(postId);
+        // Keep the comment area open even when the realtime listener rerenders the post.
+        setTimeout(() => {
+          const section=document.getElementById(`comments-${postId}`);
+          if(section) section.classList.remove('hidden');
+        }, 50);
+      } catch (err) {
+        console.error(err);
+        alert("Comment could not be sent: " + err.message);
+      }
+    };
 
     window.addComment = async (e, postId) => {
-      if (e.key === 'Enter' && e.target.value.trim() !== '') {
-        await updateDoc(doc(db, "posts", postId), {
-          comments: arrayUnion({ userId: currentUser.uid, userName: currentUser.displayName || "User", text: e.target.value.trim() })
-        });
-        e.target.value = '';
-      }
+      if (e.key !== 'Enter' || e.shiftKey) return;
+      e.preventDefault();
+      e.stopPropagation();
+      await sendComment(postId);
     };
 
     // Messaging & Active Status System (Fixed Fullscreen Messenger Layout & Active Statuses)
@@ -1618,91 +2486,99 @@
     function renderChatUserList(users) {
       const container = document.getElementById('chatUserList');
       container.innerHTML = "";
-
       const myFriends = currentUserData?.friends || [];
-      const nonFriendRequests = users.filter(u => u.uid !== currentUser.uid && !myFriends.includes(u.uid));
+      const nonFriendRequests = allUsersCache.filter(u => u.uid !== currentUser.uid && !myFriends.includes(u.uid));
       document.getElementById('msgRequestCount').innerText = nonFriendRequests.length;
 
-      const msgBadge = document.getElementById('messagesBadge');
-      if (msgBadge) {
-        msgBadge.innerText = nonFriendRequests.length;
-        msgBadge.classList.toggle('hidden', nonFriendRequests.length === 0);
-      }
+      updateMessageBadge();
 
       if (currentChatSubTab === 'primary') {
         const selfDiv = document.createElement('div');
         selfDiv.className = 'user-item';
-        selfDiv.style.background = "rgba(24, 119, 242, 0.08)";
-        selfDiv.style.borderRadius = "8px";
-        selfDiv.style.padding = "10px";
-        selfDiv.style.marginBottom = "8px";
-        selfDiv.innerHTML = `
-          <div style="display:flex; align-items:center; gap:8px;">
-            <span style="font-size:18px;">📌</span>
-            <div>
-              <strong>You (Saved Messages)</strong>
-              <div style="font-size:11px; color:var(--text-muted);">Message yourself / Personal Notes</div>
-            </div>
-          </div>
-          <button class="btn-sm" onclick="openChat('${currentUser.uid}', 'Saved Messages (You)', 'single')">Notes</button>
-        `;
+        selfDiv.style.cursor = 'pointer';
+        selfDiv.onclick = () => openChat(currentUser.uid, 'Saved Messages (You)', 'single');
+        selfDiv.innerHTML = `<div style="display:flex;align-items:center;gap:8px;"><span style="font-size:18px;">📌</span><div><strong>You (Saved Messages)</strong><div style="font-size:11px;color:var(--text-muted);">Message yourself / Personal Notes</div></div></div><span style="font-size:18px;color:var(--text-muted);">›</span>`;
         container.appendChild(selfDiv);
       }
 
-      const targetUsers = users.filter(u => {
-        if (u.uid === currentUser.uid) return false;
-        const isFriend = myFriends.includes(u.uid);
-        return currentChatSubTab === 'primary' ? isFriend : !isFriend;
-      });
-
-      if (targetUsers.length === 0) {
-        container.innerHTML += `<p style="color:var(--text-muted); font-size:13px; text-align:center; padding:15px 0;">No ${currentChatSubTab === 'primary' ? 'friend chats' : 'message requests'}</p>`;
-      }
-
+      const targetUsers = users.filter(u => u.uid !== currentUser.uid && (currentChatSubTab === 'primary' ? myFriends.includes(u.uid) : !myFriends.includes(u.uid)));
       targetUsers.forEach(u => {
         const div = document.createElement('div');
         div.className = 'user-item';
         const isOnline = u.activeStatus !== false && u.isOnline;
         const statusText = isOnline ? '🟢 Active Now' : formatLastSeen(u.lastSeen);
-
-        div.innerHTML = `
-          <div style="display:flex; align-items:center; gap:8px;">
-            <div class="avatar" style="width:32px; height:32px; font-size:12px;">
-              ${u.avatarUrl ? `<img src="${u.avatarUrl}">` : (u.name ? u.name[0].toUpperCase() : 'U')}
-              ${isOnline ? '<span class="active-dot"></span>' : ''}
-            </div>
-            <div>
-              <div style="font-weight:bold; font-size:13px;">${u.name}</div>
-              <div style="font-size:11px; color:var(--text-muted);">${statusText}</div>
-            </div>
-          </div>
-          <button class="btn-sm" onclick="openChat('${u.uid}', '${u.name}', 'single')">Message</button>
-        `;
+        const safeName = escapeHtml(u.name || 'User').replace(/'/g, '&#39;');
+        div.style.cursor = 'pointer';
+        div.title = 'Tap to open chat';
+        div.onclick = () => openChat(u.uid, u.name || 'User', 'single');
+        const unreadCount = getUnreadFromMap(messageUnreadByUser, u.uid);
+        div.innerHTML = `<div style="display:flex;align-items:center;gap:8px;min-width:0;">
+          <div class="avatar" style="width:42px;height:42px;font-size:12px;">${u.avatarUrl ? `<img src="${escapeHtml(u.avatarUrl)}">` : escapeHtml(u.name?.[0]?.toUpperCase() || 'U')}${isOnline ? '<span class="active-dot"></span>' : ''}</div>
+          <div style="min-width:0;"><div style="font-weight:bold;font-size:13px;">${safeName}${unreadCount ? `<span class="unread-message-count">${unreadCount > 99 ? '99+' : unreadCount}</span>` : ''}</div><div style="font-size:11px;color:var(--text-muted);">${statusText}</div></div>
+        </div><span style="font-size:18px;color:var(--text-muted);">›</span>`;
         container.appendChild(div);
       });
 
       if (currentChatSubTab === 'primary') {
-        onSnapshot(collection(db, "groupChats"), (snapshot) => {
+        allUsersGroupUnsub && allUsersGroupUnsub();
+        allUsersGroupUnsub = onSnapshot(collection(db, "groupChats"), snapshot => {
           snapshot.forEach(gDoc => {
             const g = gDoc.data();
-            if ((g.members || []).includes(currentUser.uid)) {
-              const div = document.createElement('div');
-              div.className = 'user-item';
-              div.innerHTML = `<span>👥 <strong>${g.groupName}</strong></span><button class="btn-sm" onclick="openChat('${gDoc.id}', '${g.groupName}', 'group')">Open Group</button>`;
-              container.appendChild(div);
-            }
+            if (!(g.members || []).includes(currentUser.uid)) return;
+            const admins = g.admins || [g.createdBy];
+            const isAdmin = admins.includes(currentUser.uid);
+            const div = document.createElement('div');
+            div.className = 'user-item';
+            div.style.cursor = 'pointer';
+            div.onclick = (ev) => { if (ev.target.closest('button')) return; openChat(gDoc.id, g.groupName || 'Group', 'group'); };
+            const unreadGroupCount = getUnreadFromMap(messageUnreadByGroup, gDoc.id);
+            div.innerHTML = `<div style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+              <div class="avatar" style="width:38px;height:38px;font-size:14px;">👥</div>
+              <div><strong>${escapeHtml(g.groupName || 'Group')}${unreadGroupCount ? `<span class="unread-message-count">${unreadGroupCount > 99 ? '99+' : unreadGroupCount}</span>` : ''}</strong><div style="font-size:11px;color:var(--text-muted);">${(g.members||[]).length} members ${isAdmin ? '<span class="group-admin-badge">Admin</span>' : ''}</div></div>
+            </div><div class="group-card-actions">
+              <button class="btn-sm" onclick="openChat('${gDoc.id}','${String(g.groupName||'Group').replace(/'/g,"&#39;")}','group')">Open</button>
+              <button class="btn-danger btn-sm" onclick="leaveGroup('${gDoc.id}')">Leave</button>
+            </div>`;
+            if (isAdmin) div.querySelector('.group-card-actions').insertAdjacentHTML('beforeend', `<button class="btn-secondary btn-sm" onclick="openGroupAdmin('${gDoc.id}')">⚙ Admin</button><button class="btn-danger btn-sm" onclick="deleteGroup('${gDoc.id}')">Delete</button>`);
+            container.appendChild(div);
           });
-        });
+        }, ()=>{});
+      } else if (allUsersGroupUnsub) {
+        allUsersGroupUnsub();
+        allUsersGroupUnsub = null;
       }
     }
 
+    function renderChatSuggestions(queryText) {
+      const box = document.getElementById('chatSearchSuggestions');
+      const q = String(queryText || '').toLowerCase().trim();
+      if (!q) { box.innerHTML=''; box.classList.remove('show'); return; }
+      const matches = allUsersCache.filter(u => u.uid !== currentUser.uid && ((u.name||'').toLowerCase().includes(q) || (u.username||'').toLowerCase().includes(q))).slice(0,10);
+      box.innerHTML = '';
+      matches.forEach(u => {
+        const row = document.createElement('div');
+        row.className = 'search-result-item';
+        row.innerHTML = `<div class="search-avatar">${u.avatarUrl ? `<img src="${escapeHtml(u.avatarUrl)}">` : escapeHtml(u.name?.[0]?.toUpperCase() || 'U')}</div><div style="flex:1;"><strong>${escapeHtml(u.name||'User')}</strong><div style="font-size:11px;color:var(--text-muted);">@${escapeHtml(u.username||'user')}</div></div><span>💬</span>`;
+        row.onclick = () => { box.classList.remove('show'); document.getElementById('chatSearchInput').value=''; switchTab('messages'); setTimeout(()=>openChat(u.uid,u.name||'User','single'),0); };
+        box.appendChild(row);
+      });
+      if (!matches.length) box.innerHTML='<div class="search-result-item" style="color:var(--text-muted);">No person found</div>';
+      box.classList.add('show');
+    }
+
+    document.getElementById('chatSearchInput').addEventListener('input', e => renderChatSuggestions(e.target.value));
+    document.getElementById('chatSearchInput').addEventListener('focus', e => { if (e.target.value.trim()) renderChatSuggestions(e.target.value); });
     document.getElementById('execChatSearchBtn').onclick = () => {
-      const q = document.getElementById('chatSearchInput').value;
-      filterChatUsers(q);
+      const q = document.getElementById('chatSearchInput').value.trim();
+      if (q) renderChatSuggestions(q);
     };
+    document.addEventListener('click', e => {
+      const area = document.getElementById('chatSearchBoxArea');
+      if (area && !area.contains(e.target)) document.getElementById('chatSearchSuggestions')?.classList.remove('show');
+    });
 
     window.filterChatUsers = (queryText) => {
-      const filtered = allUsersCache.filter(u => u.name.toLowerCase().includes(queryText.toLowerCase()) || u.username.toLowerCase().includes(queryText.toLowerCase()));
+      const filtered = allUsersCache.filter(u => (u.name||'').toLowerCase().includes(String(queryText||'').toLowerCase()) || (u.username||'').toLowerCase().includes(String(queryText||'').toLowerCase()));
       renderChatUserList(filtered);
     };
 
@@ -1725,17 +2601,126 @@
 
       if (!groupName || members.length < 2) return alert("Provide a group name and select at least 1 member.");
 
-      await addDoc(collection(db, "groupChats"), {
-        groupName: groupName,
-        members: members,
-        createdBy: currentUser.uid,
-        createdAt: serverTimestamp()
-      });
-
-      document.getElementById('groupNameInput').value = "";
-      document.getElementById('createGroupCard').classList.add('hidden');
-      alert("Group chat created!");
+      try {
+        await addDoc(collection(db, "groupChats"), {
+          groupName: groupName,
+          members: members,
+          admins: [currentUser.uid],
+          createdBy: currentUser.uid,
+          createdAt: serverTimestamp()
+        });
+        document.getElementById('groupNameInput').value = "";
+        document.getElementById('createGroupCard').classList.add('hidden');
+        alert("Group chat created!");
+      } catch (err) {
+        alert('Group creation failed: ' + err.message);
+      }
     };
+
+
+    async function getGroupDocData(groupId) {
+      const snap = await getDoc(doc(db, 'groupChats', groupId));
+      return snap.exists() ? {id:snap.id, ...snap.data()} : null;
+    }
+
+    window.leaveGroup = async (groupId) => {
+      try {
+        const g = await getGroupDocData(groupId);
+        if (!g || !(g.members||[]).includes(currentUser.uid)) return;
+        if (!confirm(`Leave "${g.groupName}"?`)) return;
+        const members = (g.members||[]).filter(uid => uid !== currentUser.uid);
+        let admins = (g.admins || [g.createdBy]).filter(uid => uid !== currentUser.uid);
+        if (!admins.length && members.length) admins = [members[0]];
+        if (!members.length) {
+          await deleteDoc(doc(db,'groupChats',groupId));
+        } else {
+          await updateDoc(doc(db,'groupChats',groupId), {members, admins});
+        }
+        if (activeChatUid === groupId) document.getElementById('closeChatBtn').click();
+        if (activeGroupData?.id === groupId) activeGroupData = null;
+        renderChatUserList(allUsersCache);
+        alert('You left the group.');
+      } catch (err) {
+        alert('Could not leave group: ' + err.message + '\n\nIf Firebase says permission-denied, your Firestore Rules must allow group members to update their group membership.');
+      }
+    };
+
+    window.deleteGroup = async (groupId) => {
+      try {
+        const g = await getGroupDocData(groupId);
+        if (!g) return;
+        const admins = g.admins || [g.createdBy];
+        if (!admins.includes(currentUser.uid)) return alert('Only a group admin can delete this group.');
+        if (!confirm(`Delete "${g.groupName}" permanently?`)) return;
+        await deleteDoc(doc(db,'groupChats',groupId));
+        if (activeChatUid === groupId) document.getElementById('closeChatBtn').click();
+        if (activeGroupData?.id === groupId) activeGroupData = null;
+        document.getElementById('groupAdminCard').classList.add('hidden');
+        renderChatUserList(allUsersCache);
+        alert('Group deleted.');
+      } catch (err) {
+        alert('Could not delete group: ' + err.message + '\n\nIf Firebase says permission-denied, your Firestore Rules must allow group admins to delete groups.');
+      }
+    };
+
+    window.openGroupAdmin = async (groupId) => {
+      const g = await getGroupDocData(groupId);
+      if (!g) return;
+      const admins = g.admins || [g.createdBy];
+      if (!admins.includes(currentUser.uid)) return alert('Only group admins can open the admin panel.');
+      activeGroupData = g;
+      document.getElementById('groupAdminNameInput').value = g.groupName || '';
+      const list = document.getElementById('groupAdminMembersList');
+      list.innerHTML = '';
+      (g.members||[]).forEach(uid => {
+        const u = allUsersCache.find(x => x.uid === uid) || {};
+        const isAdmin = admins.includes(uid);
+        const isCreator = uid === g.createdBy;
+        const row = document.createElement('div');
+        row.className='user-item';
+        row.innerHTML = `<div style="display:flex;align-items:center;gap:8px;"><div class="avatar" style="width:34px;height:34px;">${u.avatarUrl?`<img src="${escapeHtml(u.avatarUrl)}">`:escapeHtml(u.name?.[0]?.toUpperCase()||'U')}</div><div><strong>${escapeHtml(u.name||'User')}</strong><div style="font-size:10px;color:var(--text-muted);">${isCreator?'Creator ':''}${isAdmin?'• Admin':''}</div></div></div><div style="display:flex;gap:4px;flex-wrap:wrap;">${uid!==currentUser.uid?`<button class="btn-danger btn-sm" onclick="removeGroupMember('${g.id}','${uid}')">Remove</button>`:''}${!isCreator&&uid!==currentUser.uid?`<button class="btn-secondary btn-sm" onclick="toggleGroupAdmin('${g.id}','${uid}')">${isAdmin?'Remove Admin':'Make Admin'}</button>`:''}</div>`;
+        list.appendChild(row);
+      });
+      document.getElementById('groupAdminCard').classList.remove('hidden');
+    };
+
+    window.removeGroupMember = async (groupId, uid) => {
+      const g = await getGroupDocData(groupId);
+      if (!g || !(g.admins||[g.createdBy]).includes(currentUser.uid)) return;
+      if (!confirm('Remove this member from the group?')) return;
+      const members=(g.members||[]).filter(x=>x!==uid);
+      const admins=(g.admins||[g.createdBy]).filter(x=>x!==uid);
+      if (!members.length) return deleteDoc(doc(db,'groupChats',groupId));
+      await updateDoc(doc(db,'groupChats',groupId),{members,admins:admins.length?admins:[g.createdBy]});
+      openGroupAdmin(groupId);
+    };
+
+    window.toggleGroupAdmin = async (groupId, uid) => {
+      const g = await getGroupDocData(groupId);
+      if (!g || !(g.admins||[g.createdBy]).includes(currentUser.uid)) return;
+      const admins=g.admins||[g.createdBy];
+      const next=admins.includes(uid)?admins.filter(x=>x!==uid):[...admins,uid];
+      await updateDoc(doc(db,'groupChats',groupId),{admins:next});
+      openGroupAdmin(groupId);
+    };
+
+    document.getElementById('saveGroupNameBtn').onclick = async () => {
+      if (!activeGroupData) return;
+      const g = await getGroupDocData(activeGroupData.id);
+      if (!g || !(g.admins||[g.createdBy]).includes(currentUser.uid)) return;
+      const name=document.getElementById('groupAdminNameInput').value.trim();
+      if (!name) return alert('Group name cannot be empty.');
+      await updateDoc(doc(db,'groupChats',g.id),{groupName:name});
+      activeGroupData={...g,groupName:name};
+      if (activeChatUid===g.id) document.getElementById('chatTargetName').innerText=name;
+      alert('Group name updated.');
+      openGroupAdmin(g.id);
+    };
+
+    document.getElementById('deleteGroupBtn').onclick = async () => {
+      if (activeGroupData?.id) await deleteGroup(activeGroupData.id);
+    };
+    document.getElementById('closeGroupPanelBtn').onclick=()=>document.getElementById('groupAdminCard').classList.add('hidden');
 
     function getActiveMessagesRef() {
       if (!activeChatUid) return null;
@@ -1756,6 +2741,10 @@
       el.style.color = isOnline ? 'var(--online)' : 'var(--text-muted)';
     }
 
+    function formatPostDateTime(value){
+      const ms=timestampMs(value)||Date.now();
+      return new Date(ms).toLocaleString([], {day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
+    }
     function escapeHtml(value) {
       return String(value ?? '').replace(/[&<>"']/g, c => ({
         '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#039;'
@@ -1800,10 +2789,47 @@
       }
 
       const time = m.createdAt?.toMillis ? new Date(m.createdAt.toMillis()).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : '';
-      body += `<div class="msg-meta"><span>${time}</span>${messageStatusHtml(m)}</div>`;
+      const reactions = m.reactions || {};
+      const reactionEntries = Object.entries(reactions);
+      const myMsgReaction = reactions[currentUser.uid] || '';
+      const reactionSummary = reactionEntries.length
+        ? `<div class="msg-reaction-bar">${Object.entries(reactionEntries.reduce((acc,[uid,emoji])=>{acc[emoji]=(acc[emoji]||0)+1;return acc;},{})).map(([emoji,n])=>`<span class="msg-react-btn ${myMsgReaction===emoji?'active':''}" onclick="setMessageReaction('${escapeHtml(m.id || '')}','${escapeHtml(emoji)}')">${emoji} ${n}</span>`).join('')}</div>`
+        : '';
+      const pickerId = `msgPicker_${m.id || Math.random().toString(36).slice(2)}`;
+      body += `
+        <div class="msg-react-wrap">
+          <button class="msg-react-btn" onclick="toggleMessageReactionPicker(event,'${pickerId}')">😊</button>
+          <div class="msg-reaction-picker" id="${pickerId}">
+            ${['👍','❤️','😂','😮','😢','😡'].map(x=>`<span class="react-icon" onclick="setMessageReaction('${escapeHtml(m.id || '')}','${x}')">${x}</span>`).join('')}
+          </div>
+        </div>
+        ${reactionSummary}
+        <div class="msg-meta"><span>${time}</span>${messageStatusHtml(m)}</div>`;
       bubble.innerHTML = body;
       return bubble;
     }
+
+
+
+    window.toggleMessageReactionPicker=(event,id)=>{
+      event.stopPropagation();
+      document.querySelectorAll('.msg-reaction-picker').forEach(x=>{if(x.id!==id)x.classList.remove('show')});
+      document.getElementById(id)?.classList.toggle('show');
+    };
+    window.setMessageReaction=async(messageId,reaction)=>{
+      if(!messageId||!activeChatUid)return;
+      try{
+        const ref=activeChatType==='single'
+          ? doc(db,'chats',[currentUser.uid,activeChatUid].sort().join('_'),'messages',messageId)
+          : doc(db,'groupChats',activeChatUid,'messages',messageId);
+        const snap=await getDoc(ref);if(!snap.exists())throw Error('Message not found');
+        const reactions={...(snap.data().reactions||{})};
+        if(reactions[currentUser.uid]===reaction)delete reactions[currentUser.uid];
+        else reactions[currentUser.uid]=reaction;
+        await updateDoc(ref,{reactions});
+        document.querySelectorAll('.msg-reaction-picker').forEach(x=>x.classList.remove('show'));
+      }catch(err){console.error(err);alert('Message reaction failed: '+err.message);}
+    };
 
     async function markIncomingMessagesDelivered(snapshot) {
       if (!currentUser || activeChatType !== 'single') return;
@@ -1853,19 +2879,28 @@
       if (writes.length) await Promise.allSettled(writes);
     }
 
-    window.openChat = (targetId, targetName, type) => {
+    window.openChat = async (targetId, targetName, type) => {
       activeChatUid = targetId;
       activeChatType = type;
+      if (type === 'single') await clearUnreadForSingle(targetId);
+      else await clearUnreadForGroup(targetId);
       document.getElementById('chatTargetName').innerText = targetName;
       const targetUser = allUsersCache.find(u => u.uid === targetId);
 
       if (type === 'single') {
         updateChatTargetStatus();
         document.getElementById('startAudioCallBtn').classList.remove('hidden');
+        document.getElementById('groupPanelBtn').classList.add('hidden');
+        document.getElementById('leaveGroupChatBtn').classList.add('hidden');
       } else {
         document.getElementById('chatTargetStatus').innerText = '👥 Group chat';
         document.getElementById('chatTargetStatus').style.color = 'var(--text-muted)';
         document.getElementById('startAudioCallBtn').classList.add('hidden');
+        const g = await getGroupDocData(targetId);
+        const isAdmin = g && (g.admins || [g.createdBy]).includes(currentUser.uid);
+        document.getElementById('groupPanelBtn').classList.toggle('hidden', !isAdmin);
+        document.getElementById('leaveGroupChatBtn').classList.remove('hidden');
+        if (g) activeGroupData = g;
       }
 
       clearPendingChatPhoto();
@@ -1883,7 +2918,7 @@
         const container = document.getElementById('chatMessages');
         container.innerHTML = "";
         snapshot.forEach(docSnap => {
-          container.appendChild(renderMessageBubble(docSnap.data()));
+          container.appendChild(renderMessageBubble({...docSnap.data(),id:docSnap.id}));
         });
         container.scrollTop = container.scrollHeight;
 
@@ -1900,6 +2935,13 @@
 
       if (chatStatusInterval) clearInterval(chatStatusInterval);
       chatStatusInterval = setInterval(updateChatTargetStatus, 5000);
+    };
+
+    document.getElementById('groupPanelBtn').onclick = () => {
+      if (activeChatType === 'group' && activeChatUid) openGroupAdmin(activeChatUid);
+    };
+    document.getElementById('leaveGroupChatBtn').onclick = () => {
+      if (activeChatType === 'group' && activeChatUid) leaveGroup(activeChatUid);
     };
 
     document.getElementById('closeChatBtn').onclick = () => {
@@ -1936,6 +2978,22 @@
       }
 
       await addDoc(messagesRef, message);
+      if (activeChatType === 'single') {
+        try {
+          await updateDoc(doc(db,'users',activeChatUid), {
+            [`unreadMessages.${currentUser.uid}`]: increment(1)
+          });
+        } catch (e) { console.warn('Unread message counter update failed:', e); }
+      } else if (activeGroupData) {
+        const members = activeGroupData.members || [];
+        await Promise.allSettled(
+          members.filter(uid => uid !== currentUser.uid).map(uid =>
+            updateDoc(doc(db,'users',uid), {
+              [`unreadGroupMessages.${activeChatUid}`]: increment(1)
+            }).catch(() => {})
+          )
+        );
+      }
     }
 
     function setComposerStatus(text, error=false) {
@@ -2076,8 +3134,14 @@
       preview.dataset.objectUrl = objectUrl;
       preview.src = objectUrl;
       preview.style.display = 'block';
+      preview.title = 'Tap photo preview to cancel';
       document.getElementById('sendMsgBtn').innerText = 'Send Photo';
+      document.getElementById('sendMsgBtn').disabled = false;
       setComposerStatus('📷 Photo selected — press Send Photo');
+    };
+
+    document.getElementById('chatImagePreview').onclick = () => {
+      if (pendingChatPhotoFile) clearPendingChatPhoto();
     };
 
     function formatVoiceDuration(ms) {
@@ -2152,6 +3216,7 @@
         btn.disabled = false;
         btn.classList.add('voice-recording');
         btn.innerText = '⏹️';
+        btn.title = 'Stop recording and send voice message';
         document.getElementById('voiceRecordTime').classList.remove('hidden');
         updateVoiceTimer();
         voiceRecordTimer = setInterval(updateVoiceTimer, 250);
@@ -2183,7 +3248,7 @@
       isRecordingVoice = false;
       voiceRecordStartedAt = 0;
       const btn = document.getElementById('voiceMsgBtn');
-      if (btn) { btn.classList.remove('voice-recording'); btn.disabled = false; btn.innerText = '🎙️'; }
+      if (btn) { btn.classList.remove('voice-recording'); btn.disabled = false; btn.innerText = '🎙️'; btn.title = 'Tap to start/stop voice recording'; }
       const time = document.getElementById('voiceRecordTime');
       if (time) { time.classList.add('hidden'); time.innerText = '00:00'; }
       mediaRecorder = null;
@@ -2243,6 +3308,32 @@
       }
       document.getElementById('callModal').classList.add('hidden');
     };
-  </script>
+  // V12_comment_menu_close
+document.addEventListener('click',(e)=>{
+  if(!e.target.closest('.comment-menu-wrap')){
+    document.querySelectorAll('.comment-menu').forEach(x=>x.classList.remove('show'));
+  }
+});
+</script>
+
+<!-- V12 guaranteed Story fullscreen viewer -->
+<div id="mwishStoryViewer" style="display:none;position:fixed;inset:0;width:100vw;height:100vh;background:#000;z-index:2147483647;overflow:hidden;">
+  <div style="position:absolute;top:0;left:0;right:0;z-index:5;padding:14px 14px 20px;background:linear-gradient(rgba(0,0,0,.65),transparent);color:#fff;">
+    <div style="display:flex;align-items:center;gap:10px;">
+      <div id="mwishStoryAvatar" style="width:38px;height:38px;border-radius:50%;overflow:hidden;background:#1877F2;display:flex;align-items:center;justify-content:center;font-weight:700;flex-shrink:0;"></div>
+      <div style="min-width:0;flex:1;">
+        <div id="mwishStoryName" style="font-weight:700;font-size:14px;"></div>
+        <div id="mwishStoryTime" style="font-size:10px;opacity:.8;"></div>
+      </div>
+      <button id="mwishStoryClose" style="border:0;background:rgba(255,255,255,.14);color:#fff;width:40px;height:40px;border-radius:50%;font-size:24px;cursor:pointer;">×</button>
+    </div>
+    <div id="mwishStoryProgress" style="margin-top:9px;height:3px;background:rgba(255,255,255,.25);border-radius:4px;"></div>
+  </div>
+  <img id="mwishStoryImage" alt="Story" style="position:absolute;inset:0;width:100vw;height:100vh;object-fit:contain;background:#000;display:block;">
+  <button id="mwishStoryPrev" style="display:none;position:absolute;left:0;top:45%;width:30%;height:30%;border:0;background:transparent;color:transparent;z-index:4;"></button>
+  <button id="mwishStoryNext" style="display:none;position:absolute;right:0;top:45%;width:30%;height:30%;border:0;background:transparent;color:transparent;z-index:4;"></button>
+  <div id="mwishStoryViewCount" style="position:absolute;bottom:18px;left:50%;transform:translateX(-50%);z-index:5;background:rgba(0,0,0,.55);color:#fff;padding:6px 10px;border-radius:14px;font-size:11px;"></div>
+</div>
+
 </body>
 </html>
